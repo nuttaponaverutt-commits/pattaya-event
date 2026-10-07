@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pattaya Event</title>
+  <style>
+    :root { --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7280; --ok: #15803d; --err: #b91c1c; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #111418; --card: #1b2027; --text: #e6e8eb; --muted: #9aa3ad; --ok: #4ade80; --err: #f87171; }
+    }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Sarabun", sans-serif; }
+    main { max-width: 480px; margin: 48px auto; padding: 0 16px; }
+    .card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    h1 { font-size: 1.3rem; margin: 0 0 16px; }
+    #status { font-size: 1.1rem; font-weight: 600; }
+    .ok { color: var(--ok); } .err { color: var(--err); }
+    small { color: var(--muted); display: block; margin-top: 12px; word-break: break-all; }
+    button { margin-top: 16px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--muted); background: transparent; color: var(--text); cursor: pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>Pattaya Event — ทดสอบการเชื่อมต่อ</h1>
+    <div id="status">กำลังเชื่อมต่อ...</div>
+    <small id="detail"></small>
+    <button onclick="check()">ทดสอบอีกครั้ง</button>
+  </div>
+</main>
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyW_wPvTkL8cgAu0Wj5XU-ZWajby3AXXOt9enrQIdTOp8sRVr3Uy81B3awiYhbApI8D/exec';
+
+  async function check() {
+    const status = document.getElementById('status');
+    const detail = document.getElementById('detail');
+    status.className = ''; status.textContent = 'กำลังเชื่อมต่อ...'; detail.textContent = '';
+    const t0 = performance.now();
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      if (!data.ok) throw new Error('ได้รับคำตอบแต่ ok ไม่เป็น true');
+      status.className = 'ok';
+      status.textContent = '✅ เชื่อมต่อ Apps Script สำเร็จ';
+      detail.textContent = 'ใช้เวลา ' + Math.round(performance.now() - t0) + ' ms';
+    } catch (e) {
+      status.className = 'err';
+      status.textContent = '❌ เชื่อมต่อไม่สำเร็จ';
+      detail.textContent = e.message;
+    }
+  }
+  check();
+</script>
+</body>
+</html>

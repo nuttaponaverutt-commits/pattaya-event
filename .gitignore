@@ -1,0 +1,6 @@
+# รหัสผ่านและข้อมูล login ห้ามขึ้น git
+gas/Secrets.gs
+.clasprc.json
+**/.clasprc.json
+.env
+node_modules/
