@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>หลังบ้าน</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f1f3d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/app.css">
+  <style>
+    .layout { display: flex; min-height: calc(100vh - 59px); }
+    .sidenav { display: none; }
+    .content { flex: 1; min-width: 0; padding: 20px 16px; }
+    @media (min-width: 900px) {
+      .sidenav { display: block; width: 220px; flex: none; background: #fff; border-right: 1px solid var(--line); padding: 16px 10px; }
+      .sidenav button {
+        display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; margin-bottom: 4px;
+        border: 0; border-radius: 8px; background: transparent; font: inherit; color: var(--text); cursor: pointer; text-align: left;
+      }
+      .sidenav button svg { width: 20px; height: 20px; color: var(--muted); }
+      .sidenav button:hover { background: var(--bg); }
+      .sidenav button.active { background: var(--navy); color: #fff; font-weight: 600; }
+      .sidenav button.active svg { color: var(--gold-soft); }
+      .sidenav hr { border: 0; border-top: 1px solid var(--line); margin: 12px 4px; }
+      .sidenav a { display: block; padding: 10px 12px; font-size: 14px; color: var(--navy); }
+      .bottomnav { display: none; }
+      .with-bottomnav { padding-bottom: 20px; }
+      .content { padding: 28px 32px; }
+    }
+    .view-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .view-head h2 { margin: 0; font-size: 21px; color: var(--navy); }
+    .view-head .updated { color: var(--muted); font-size: 13px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+    @media (min-width: 700px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+    .kpi { background: #fff; border-radius: 10px; padding: 16px; border: 1px solid var(--line); }
+    .kpi .label { color: var(--muted); font-size: 13px; }
+    .kpi .value { font-size: 30px; font-weight: 600; color: var(--navy); line-height: 1.2; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .kpi .value small { font-size: 15px; color: var(--muted); font-weight: 400; }
+    .kpi.accent { border-top: 3px solid var(--gold); }
+
+    .grid2 { display: grid; gap: 16px; }
+    @media (min-width: 1000px) { .grid2 { grid-template-columns: 1fr 1.4fr; } }
+    .card { background: #fff; border-radius: 10px; border: 1px solid var(--line); padding: 16px; }
+    .card h3 { margin: 0 0 12px; font-size: 16px; color: var(--navy); }
+    .bar-row { display: grid; grid-template-columns: 80px 1fr 48px; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
+    .bar { height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+    .bar span { display: block; height: 100%; background: var(--navy); border-radius: 5px; }
+    .bar-row .n { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .progress { height: 12px; background: var(--bg); border-radius: 6px; overflow: hidden; margin: 6px 0 4px; }
+    .progress span { display: block; height: 100%; background: var(--ok); }
+
+    .recent { list-style: none; margin: 0; padding: 0; }
+    .recent li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--bg); font-size: 14px; }
+    .recent li:last-child { border-bottom: 0; }
+    .recent .t { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    table.data { width: 100%; border-collapse: collapse; background: #fff; font-size: 14px; }
+    table.data th { text-align: left; font-weight: 600; color: var(--muted); font-size: 13px; padding: 10px 12px; border-bottom: 2px solid var(--line); white-space: nowrap; background: #faf9f6; }
+    table.data td { padding: 10px 12px; border-bottom: 1px solid var(--bg); vertical-align: middle; }
+    table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .table-wrap { border: 1px solid var(--line); border-radius: 10px; overflow: auto; background: #fff; }
+
+    .filters { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-bottom: 12px; }
+    .filters input, .filters select { width: 100%; padding: 10px 12px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .filters .q { grid-column: 1 / -1; }
+    @media (min-width: 900px) { .filters { grid-template-columns: 2fr 1fr 1fr 1fr; } .filters .q { grid-column: auto; } }
+    .count-line { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .row-actions button { padding: 5px 10px; font: inherit; font-size: 13px; border: 1px solid var(--line); background: #fff; border-radius: 6px; cursor: pointer; color: var(--navy); white-space: nowrap; }
+    .row-actions button:hover { border-color: var(--navy); }
+    .row-actions button.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .row-actions button.del { color: var(--bad); }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    /* รายชื่อบนมือถือแสดงเป็นการ์ด */
+    @media (max-width: 899px) {
+      table.reg thead { display: none; }
+      table.reg, table.reg tbody, table.reg tr, table.reg td { display: block; width: 100%; }
+      table.reg tr { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+      table.reg td { border: 0; padding: 2px 0; }
+      table.reg td[data-l]::before { content: attr(data-l) "  "; color: var(--muted); font-size: 12px; }
+      table.reg td.c-name { font-weight: 600; font-size: 15px; }
+      table.reg .row-actions { justify-content: flex-start; margin-top: 8px; }
+    }
+  </style>
+</head>
+<body class="app">
+
+  <section id="loginView" class="login" hidden>
+    <h1>หลังบ้าน</h1>
+    <p class="sub js-event-name">Pattaya Event</p>
+    <form id="loginForm" class="panel" novalidate>
+      <div id="loginError" class="alert" hidden></div>
+      <div class="field">
+        <label for="password">รหัส Admin</label>
+        <input type="password" id="password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" id="loginBtn">เข้าสู่ระบบ</button>
+    </form>
+  </section>
+
+  <div id="appView" hidden>
+    <header class="appbar">
+      <div class="title"><span class="js-event-name">Pattaya Event</span><small>หลังบ้าน</small></div>
+      <button type="button" id="logoutBtn">ออกจากระบบ</button>
+    </header>
+
+    <div class="layout">
+      <nav class="sidenav">
+        <button type="button" data-nav="dashboard" class="active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>ภาพรวม
+        </button>
+        <button type="button" data-nav="sales">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/></svg>สรุปราย Sales
+        </button>
+        <button type="button" data-nav="list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>รายชื่อ
+        </button>
+        <hr>
+        <a href="#" class="js-sheet-link" target="_blank" rel="noopener">เปิด Google Sheet</a>
+      </nav>
+
+      <main class="content with-bottomnav">
+        <!-- Dashboard -->
+        <section data-view="dashboard">
+          <div class="view-head">
+            <h2>ภาพรวม</h2>
+            <span class="updated" id="dashUpdated"></span>
+          </div>
+          <div class="kpis">
+            <div class="kpi accent"><div class="label">ลงทะเบียนทั้งหมด</div><div class="value" id="kTotal">-</div></div>
+            <div class="kpi"><div class="label">มาแล้ว</div><div class="value" id="kIn">-</div></div>
+            <div class="kpi"><div class="label">ยังไม่มา</div><div class="value" id="kPending">-</div></div>
+            <div class="kpi"><div class="label">% มางาน</div><div class="value" id="kPct">-</div></div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <h3>แยกตามช่องทาง</h3>
+              <div id="sourceBars"></div>
+              <h3 style="margin-top:20px">ความจุ</h3>
+              <div class="progress"><span id="capBar" style="width:0"></span></div>
+              <div class="muted" id="capText"></div>
+            </div>
+            <div class="card">
+              <h3>เช็คอินล่าสุด</h3>
+              <ul class="recent" id="recentList"><li class="muted">กำลังโหลด...</li></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sales summary -->
+        <section data-view="sales" hidden>
+          <div class="view-head">
+            <h2>สรุปราย Sales</h2>
+            <div class="tools"><button class="btn btn-ghost btn-sm" type="button" data-action="rematch">Match ใหม่</button></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th>Sales</th><th class="num">ลูกค้าใน list</th><th class="num">ลงทะเบียน</th><th class="num">มาจริง</th><th class="num">% มา</th></tr></thead>
+              <tbody id="salesBody"><tr><td colspan="5" class="muted">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+          <p class="muted" style="margin-top:10px">"ลูกค้าใน list" นับจากแท็บ Sales_List / "ไม่มี Sales" คือผู้ลงทะเบียนที่จับคู่ Sales ไม่ได้</p>
+        </section>
+
+        <!-- Registrations -->
+        <section data-view="list" hidden>
+          <div class="view-head">
+            <h2>รายชื่อ</h2>
+            <div class="tools">
+              <button class="btn btn-ghost btn-sm" type="button" data-action="rematch">Match ใหม่</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="exportBtn">Export CSV</button>
+              <a class="btn btn-ghost btn-sm js-sheet-link" href="#" target="_blank" rel="noopener">เปิด Google Sheet</a>
+              <button class="btn btn-ghost btn-sm" type="button" id="reloadBtn">รีเฟรช</button>
+            </div>
+          </div>
+          <div class="filters">
+            <input class="q" type="search" id="fQ" placeholder="ค้นหา ชื่อ เบอร์ MMID ร้าน รหัส">
+            <select id="fStatus"><option value="">ทุกสถานะ</option><option>ยังไม่มา</option><option>มาแล้ว</option></select>
+            <select id="fSource"><option value="">ทุกช่องทาง</option><option>Online</option><option>Walk-in</option><option>Staff</option></select>
+            <select id="fSales"><option value="">ทุก Sales</option></select>
+          </div>
+          <div class="count-line" id="countLine"></div>
+          <div class="table-wrap">
+            <table class="data reg">
+              <thead><tr><th>ชื่อ-นามสกุล</th><th>เบอร์โทร</th><th>MMID</th><th>ร้าน/บริษัท</th><th>Sales</th><th>ช่องทาง</th><th>สถานะ</th><th></th></tr></thead>
+              <tbody id="regBody"><tr><td colspan="8" class="muted">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <nav class="bottomnav">
+      <button type="button" data-nav="dashboard" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>ภาพรวม
+      </button>
+      <button type="button" data-nav="sales">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/></svg>Sales
+      </button>
+      <button type="button" data-nav="list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>รายชื่อ
+      </button>
+    </nav>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    const SKEY = 'pe_admin';
+    const NONE = 'ไม่มี Sales';
+    let sess = loadSession(SKEY);
+    let view = 'dashboard';
+    let eventInfo = {};
+    let records = [];
+    let salesNames = [];
+    let dashTimer = null;
+
+    api('config').then(function (cfg) {
+      if (!cfg.ok) return;
+      eventInfo = cfg;
+      if (cfg.event_name) $all('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
+    });
+
+    if (sess) enterApp(); else $('#loginView').hidden = false;
+
+    // ---------- Login ----------
+    $('#loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const errBox = $('#loginError');
+      const password = $('#password').value;
+      if (!password) { errBox.textContent = 'กรุณากรอกรหัส Admin'; errBox.hidden = false; return; }
+      const btn = $('#loginBtn');
+      btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+      const res = await api('login', { role: 'admin', password: password, station: 'Admin' });
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      if (!res.ok) { errBox.textContent = res.error; errBox.hidden = false; return; }
+      errBox.hidden = true;
+      $('#password').value = '';
+      sess = { token: res.token, station: res.station, expires_at: res.expires_at };
+      saveSession(SKEY, sess);
+      enterApp();
+    });
+
+    function enterApp() {
+      $('#loginView').hidden = true;
+      $('#appView').hidden = false;
+      showView('dashboard');
+      loadSalesNames();
+    }
+
+    function logout(msg) {
+      if (sess) api('logout', { token: sess.token });
+      sess = null;
+      clearSession(SKEY);
+      clearInterval(dashTimer);
+      closeSheet();
+      $('#appView').hidden = true;
+      $('#loginView').hidden = false;
+      if (msg) { $('#loginError').textContent = msg; $('#loginError').hidden = false; }
+    }
+    $('#logoutBtn').addEventListener('click', function () { logout(); });
+
+    async function authed(action, data) {
+      const res = await api(action, Object.assign({ token: sess && sess.token, device: 'admin' }, data));
+      if (res.auth === false) logout('หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่');
+      return res;
+    }
+
+    // ---------- Navigation ----------
+    $all('[data-nav]').forEach(function (b) { b.addEventListener('click', function () { showView(b.dataset.nav); }); });
+
+    function showView(name) {
+      view = name;
+      $all('[data-view]').forEach(function (s) { s.hidden = s.dataset.view !== name; });
+      $all('[data-nav]').forEach(function (b) { b.classList.toggle('active', b.dataset.nav === name); });
+      clearInterval(dashTimer);
+      if (name === 'dashboard' || name === 'sales') {
+        loadDashboard();
+        if (name === 'dashboard') dashTimer = setInterval(function () { if (!document.hidden) loadDashboard(); }, 15000);
+      }
+      if (name === 'list') loadList();
+      window.scrollTo(0, 0);
+    }
+
+    // ---------- Dashboard ----------
+    async function loadDashboard() {
+      const d = await authed('dashboard', {});
+      if (!sess) return;
+      if (!d.ok) { toast(d.error, true); return; }
+      $all('.js-sheet-link').forEach(function (a) { a.href = d.sheet_url; });
+      $('#kTotal').textContent = d.total.toLocaleString();
+      $('#kIn').textContent = d.attended.toLocaleString();
+      $('#kPending').textContent = d.pending.toLocaleString();
+      $('#kPct').innerHTML = d.attend_pct + '<small>%</small>';
+      $('#dashUpdated').textContent = 'อัปเดต ' + d.updated_at + ' · รีเฟรชทุก 15 วินาที';
+
+      const max = Math.max(1, d.by_source['Online'], d.by_source['Walk-in'], d.by_source['Staff']);
+      $('#sourceBars').innerHTML = ['Online', 'Walk-in', 'Staff'].map(function (k) {
+        return '<div class="bar-row"><span>' + k + '</span><div class="bar"><span style="width:' + (d.by_source[k] / max * 100) + '%"></span></div><span class="n">' + d.by_source[k] + '</span></div>';
+      }).join('');
+
+      if (d.max_capacity) {
+        const pct = Math.min(100, d.total / d.max_capacity * 100);
+        $('#capBar').style.width = pct + '%';
+        $('#capText').textContent = d.total + ' / ' + d.max_capacity + ' ที่ · ลงทะเบียนออนไลน์: ' + (d.registration_open ? 'เปิดอยู่' : 'ปิดแล้ว');
+      }
+
+      $('#recentList').innerHTML = d.recent.length ? d.recent.map(function (p) {
+        return '<li><span><b>' + esc(p.full_name) + '</b><br><span class="muted">' + esc(p.company || p.mmid) + ' · ' + esc(p.checked_in_by) + '</span></span><span class="t">' + esc(p.checked_in_at) + '</span></li>';
+      }).join('') : '<li class="muted">ยังไม่มีการเช็คอิน</li>';
+
+      $('#salesBody').innerHTML = d.sales_summary.length ? d.sales_summary.map(function (s) {
+        const pct = s.registered ? Math.round(s.attended / s.registered * 100) + '%' : '-';
+        return '<tr><td>' + esc(s.sales_name) + '</td><td class="num">' + (s.sales_name === NONE ? '-' : s.in_list) + '</td><td class="num">' + s.registered + '</td><td class="num">' + s.attended + '</td><td class="num">' + pct + '</td></tr>';
+      }).join('') : '<tr><td colspan="5" class="muted">ยังไม่มีข้อมูล</td></tr>';
+    }
+
+    // ---------- List ----------
+    async function loadList() {
+      const res = await authed('list', {});
+      if (!sess) return;
+      if (!res.ok) { toast(res.error, true); return; }
+      records = res.records;
+      fillSalesFilter();
+      renderList();
+    }
+
+    async function loadSalesNames() {
+      const res = await authed('sales_names', {});
+      if (res.ok) { salesNames = res.names; fillSalesFilter(); }
+    }
+
+    function allSalesNames() {
+      const set = {};
+      salesNames.forEach(function (n) { set[n] = 1; });
+      records.forEach(function (r) { if (r.sales_name) set[r.sales_name] = 1; });
+      return Object.keys(set).sort();
+    }
+
+    function fillSalesFilter() {
+      const sel = $('#fSales');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">ทุก Sales</option><option value="__none">' + NONE + '</option>' +
+        allSalesNames().map(function (n) { return '<option>' + esc(n) + '</option>'; }).join('');
+      sel.value = cur;
+    }
+
+    function filtered() {
+      const q = $('#fQ').value.trim().toLowerCase();
+      const st = $('#fStatus').value, src = $('#fSource').value, sales = $('#fSales').value;
+      return records.filter(function (r) {
+        if (st && r.status !== st) return false;
+        if (src && r.source !== src) return false;
+        if (sales === '__none' && r.sales_name) return false;
+        if (sales && sales !== '__none' && r.sales_name !== sales) return false;
+        if (q) {
+          const hay = [r.full_name, r.phone, r.mmid, r.company, r.reg_id, r.sales_name].join(' ').toLowerCase();
+          if (hay.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderList() {
+      const rows = filtered();
+      $('#countLine').textContent = 'แสดง ' + rows.length + ' จาก ' + records.length + ' รายการ';
+      $('#regBody').innerHTML = rows.length ? rows.map(function (r) {
+        return '<tr data-id="' + esc(r.reg_id) + '">' +
+          '<td class="c-name">' + esc(r.full_name) + '<div class="muted">' + esc(r.reg_id) + '</div></td>' +
+          '<td data-l="เบอร์">' + esc(r.phone) + '</td>' +
+          '<td data-l="MMID">' + esc(r.mmid) + '</td>' +
+          '<td data-l="ร้าน">' + esc(r.company || '-') + '</td>' +
+          '<td data-l="Sales">' + esc(r.sales_name || NONE) + (r.match_method === 'manual' ? ' <span class="muted">(เลือกเอง)</span>' : '') + '</td>' +
+          '<td><span class="badge badge-src">' + esc(r.source) + '</span></td>' +
+          '<td>' + statusBadge(r.status) + (r.status === 'มาแล้ว' ? '<div class="muted">' + esc(r.checked_in_at) + ' · ' + esc(r.checked_in_by) + '</div>' : '') + '</td>' +
+          '<td><div class="row-actions">' +
+            (r.status !== 'มาแล้ว' ? '<button type="button" class="ok" data-act="checkin">เช็คอิน</button>' : '') +
+            '<button type="button" data-act="qr">QR</button>' +
+            '<button type="button" data-act="edit">แก้ไข</button>' +
+            '<button type="button" class="del" data-act="delete">ลบ</button>' +
+          '</div></td></tr>';
+      }).join('') : '<tr><td colspan="8" class="empty">ไม่พบรายการ</td></tr>';
+    }
+
+    ['#fQ', '#fStatus', '#fSource', '#fSales'].forEach(function (s) {
+      $(s).addEventListener('input', renderList);
+    });
+    $('#reloadBtn').addEventListener('click', function () { loadList(); toast('โหลดข้อมูลล่าสุดแล้ว'); });
+
+    $('#regBody').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-act]');
+      if (!b) return;
+      const id = b.closest('tr').dataset.id;
+      const r = records.find(function (x) { return x.reg_id === id; });
+      if (!r) return;
+      ({ checkin: confirmCheckin, qr: showQr, edit: editRecord, delete: confirmDelete })[b.dataset.act](r);
+    });
+
+    function replaceRecord(rec) {
+      const i = records.findIndex(function (x) { return x.reg_id === rec.reg_id; });
+      if (i !== -1) records[i] = rec;
+      renderList();
+    }
+
+    function confirmCheckin(r) {
+      const ov = openSheet('<div class="sheet-head ok">เช็คอินให้ผู้นี้</div><div class="sheet-body">' + personDetails(r) + '</div>' +
+        '<div class="sheet-foot"><button class="btn btn-ok btn-block" id="doIt">ยืนยันเช็คอิน</button><button class="btn btn-ghost btn-block" data-close>ยกเลิก</button></div>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#doIt', ov).addEventListener('click', async function () {
+        this.disabled = true;
+        const res = await authed('update', { reg_id: r.reg_id, fields: { status: 'มาแล้ว' } });
+        if (!res.ok) { this.disabled = false; toast(res.error, true); return; }
+        closeSheet();
+        replaceRecord(res.record);
+        toast('เช็คอินแล้ว');
+      });
+    }
+
+    async function showQr(r) {
+      const ov = openSheet('<div class="sheet-head plain">QR ของ ' + esc(r.full_name) + '</div><div class="sheet-body result" id="qrHost"></div>' +
+        '<div class="sheet-foot"><button class="btn btn-ghost btn-block" data-close>ปิด</button></div>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      await showQrCard($('#qrHost', ov), Object.assign({}, eventInfo, { reg_id: r.reg_id, full_name: r.full_name }));
+    }
+
+    function editRecord(r) {
+      const names = allSalesNames();
+      if (r.sales_name && names.indexOf(r.sales_name) === -1) names.push(r.sales_name);
+      const opts = '<option value="">' + NONE + '</option>' + names.map(function (n) {
+        return '<option' + (n === r.sales_name ? ' selected' : '') + '>' + esc(n) + '</option>';
+      }).join('');
+      const ov = openSheet(
+        '<div class="sheet-head plain">แก้ไขข้อมูล<small>' + esc(r.reg_id) + ' · ลงทะเบียน ' + esc(r.created_at) + ' (' + esc(r.source) + ')</small></div>' +
+        '<form class="sheet-body" id="editForm">' +
+          '<div id="editError" class="alert" hidden></div>' +
+          '<div class="field"><label>ชื่อ-นามสกุล</label><input type="text" name="full_name" maxlength="100" value="' + esc(r.full_name) + '"></div>' +
+          '<div class="field"><label>เบอร์โทร</label><input type="tel" name="phone" maxlength="12" value="' + esc(r.phone) + '"></div>' +
+          '<div class="field"><label>MMID</label><input type="text" name="mmid" maxlength="30" value="' + esc(r.mmid) + '"></div>' +
+          '<div class="field"><label>ร้าน/บริษัท</label><input type="text" name="company" maxlength="100" value="' + esc(r.company) + '"></div>' +
+          '<div class="field"><label>Sales <span class="opt">(เลือกเองจะไม่ถูกทับตอน Match ใหม่)</span></label><select name="sales_name">' + opts + '</select></div>' +
+          '<div class="field"><label>สถานะ</label><select name="status"><option' + (r.status === 'ยังไม่มา' ? ' selected' : '') + '>ยังไม่มา</option><option' + (r.status === 'มาแล้ว' ? ' selected' : '') + '>มาแล้ว</option></select></div>' +
+          '<div class="field"><label>หมายเหตุ</label><textarea name="note" maxlength="300">' + esc(r.note) + '</textarea></div>' +
+          '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary" id="saveBtn">บันทึก</button></div>' +
+        '</form>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#editForm', ov).addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const f = e.target;
+        const fields = {};
+        ['full_name', 'phone', 'mmid', 'company', 'note', 'status', 'sales_name'].forEach(function (k) {
+          const v = f[k].value.trim();
+          if (v !== String(r[k] == null ? '' : r[k])) fields[k] = k === 'phone' ? cleanPhone(v) : v;
+        });
+        if (!Object.keys(fields).length) { closeSheet(); return; }
+        const btn = $('#saveBtn', ov);
+        btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+        const res = await authed('update', { reg_id: r.reg_id, fields: fields });
+        btn.disabled = false; btn.textContent = 'บันทึก';
+        if (!res.ok) { const eb = $('#editError', ov); eb.textContent = res.error; eb.hidden = false; return; }
+        closeSheet();
+        replaceRecord(res.record);
+        toast('บันทึกแล้ว');
+      });
+    }
+
+    function confirmDelete(r) {
+      const ov = openSheet('<div class="sheet-head bad">ลบรายการนี้?</div><div class="sheet-body">' + personDetails(r) +
+        '<p style="color:var(--bad);margin-top:14px">ลบแล้วกู้คืนไม่ได้ และ QR ของคนนี้จะใช้เข้างานไม่ได้</p></div>' +
+        '<div class="sheet-foot"><button class="btn btn-danger btn-block" id="doDel">ยืนยันลบ</button><button class="btn btn-ghost btn-block" data-close>ยกเลิก</button></div>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#doDel', ov).addEventListener('click', async function () {
+        this.disabled = true;
+        const res = await authed('delete', { reg_id: r.reg_id });
+        if (!res.ok) { this.disabled = false; toast(res.error, true); return; }
+        closeSheet();
+        records = records.filter(function (x) { return x.reg_id !== r.reg_id; });
+        renderList();
+        toast('ลบแล้ว');
+      });
+    }
+
+    // ---------- Tools ----------
+    $all('[data-action="rematch"]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        const ov = openSheet('<div class="sheet-head plain">Match Sales ใหม่</div><div class="sheet-body"><p>ระบบจะจับคู่ Sales ให้ผู้ลงทะเบียนที่ยังไม่มี Sales โดยใช้ MMID ก่อน แล้วจึงใช้เบอร์โทร รายการที่เลือก Sales เองจะไม่ถูกเปลี่ยน</p></div>' +
+          '<div class="sheet-foot"><button class="btn btn-primary btn-block" id="doMatch">เริ่ม Match</button><button class="btn btn-ghost btn-block" data-close>ยกเลิก</button></div>');
+        $('[data-close]', ov).addEventListener('click', closeSheet);
+        $('#doMatch', ov).addEventListener('click', async function () {
+          this.disabled = true; this.innerHTML = 'กำลัง Match <span class="spinner"></span>';
+          const res = await authed('rematch', {});
+          closeSheet();
+          if (!res.ok) { toast(res.error, true); return; }
+          toast('ตรวจ ' + res.checked + ' รายการ จับคู่ได้ ' + res.matched + ' รายการ');
+          loadSalesNames();
+          if (view === 'list') loadList(); else loadDashboard();
+        });
+      });
+    });
+
+    $('#exportBtn').addEventListener('click', function () {
+      const rows = filtered();
+      const cols = [
+        ['reg_id', 'reg_id'], ['created_at', 'created_at'], ['source', 'source'], ['full_name', 'full_name'],
+        ['phone', 'phone'], ['mmid', 'mmid'], ['company', 'company'], ['sales_name', 'sales_name'],
+        ['match_method', 'match_method'], ['status', 'status'], ['checked_in_at_full', 'checked_in_at'],
+        ['checked_in_by', 'checked_in_by'], ['note', 'note']
+      ];
+      const cell = function (v, asText) {
+        const s = String(v == null ? '' : v);
+        // ="..." ให้ Excel เก็บเลข 0 นำหน้าไว้
+        if (asText && s) return '="' + s.replace(/"/g, '""') + '"';
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const lines = [cols.map(function (c) { return c[1]; }).join(',')].concat(rows.map(function (r) {
+        return cols.map(function (c) { return cell(r[c[0]], c[0] === 'phone' || c[0] === 'mmid'); }).join(',');
+      }));
+      const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const d = new Date();
+      a.download = 'registrations-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + '.csv';
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    });
+  </script>
+</body>
+</html>

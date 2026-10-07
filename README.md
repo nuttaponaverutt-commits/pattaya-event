@@ -5,6 +5,17 @@
 - `docs/` คือหน้าเว็บที่ขึ้น GitHub Pages
 - `gas/` คือ Google Apps Script ที่ผูกกับ Google Sheet "Pattaya Event Registration"
 
+## หน้าเว็บ
+
+| หน้า | ไฟล์ | ใช้ทำอะไร |
+|---|---|---|
+| Landing + ลงทะเบียน | `docs/index.html` | ลูกค้าลงทะเบียน ได้ QR (`?src=walkin` สำหรับ walk-in) |
+| ดู QR อีกครั้ง | `docs/myqr.html` | ค้นด้วยเบอร์โทร |
+| Staff | `docs/staff/` | สแกน QR เช็คอิน ค้นหา และลงทะเบียนแทน |
+| Admin | `docs/admin/` | Dashboard, สรุป Sales, รายชื่อ, Match ใหม่, Export CSV |
+
+รูป KV: วางไฟล์ `docs/assets/kv.jpg` แล้วรูปจะแทน placeholder เอง
+
 ## อัปเดตโค้ด Apps Script
 
 ```bash

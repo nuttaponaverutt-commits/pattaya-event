@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Staff เช็คอิน</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f1f3d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/app.css">
+  <style>
+    #scanView { position: fixed; top: 59px; left: 0; right: 0; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)); background: #000; }
+    #reader { position: absolute; inset: 0; overflow: hidden; border: 0 !important; }
+    #reader video { width: 100% !important; height: 100% !important; object-fit: cover; }
+    #reader img, #reader__dashboard { display: none !important; }
+    .scan-frame {
+      position: absolute; left: 50%; top: 46%; width: min(70vw, 300px); aspect-ratio: 1; transform: translate(-50%, -50%);
+      border: 3px solid rgba(255,255,255,.85); border-radius: 16px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.35); pointer-events: none;
+    }
+    .scan-tip { position: absolute; left: 0; right: 0; bottom: 84px; text-align: center; color: #fff; font-size: 15px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+    .scan-actions { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; gap: 10px; }
+    .scan-actions .btn { flex: 1; background: rgba(255,255,255,.95); color: var(--navy); }
+    .cam-msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; text-align: center; padding: 24px; }
+    .page { padding: 20px 16px; max-width: 560px; margin: 0 auto; }
+    .page h2 { font-size: 19px; color: var(--navy); margin: 0 0 14px; }
+    .searchbar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .searchbar input { flex: 1; padding: 12px 14px; font: inherit; border: 1px solid var(--line); border-radius: 8px; }
+  </style>
+</head>
+<body class="app">
+
+  <!-- Login -->
+  <section id="loginView" class="login" hidden>
+    <h1>Staff เช็คอิน</h1>
+    <p class="sub js-event-name">Pattaya Event</p>
+    <form id="loginForm" class="panel" novalidate>
+      <div id="loginError" class="alert" hidden></div>
+      <div class="field">
+        <label for="station">ชื่อจุดสแกน</label>
+        <input type="text" id="station" maxlength="40" placeholder="เช่น จุด 1" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="password">รหัส Staff</label>
+        <input type="password" id="password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" id="loginBtn">เข้าสู่ระบบ</button>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="appView" hidden>
+    <header class="appbar">
+      <div class="title"><span class="js-event-name">Pattaya Event</span><small id="stationLabel"></small></div>
+      <button type="button" id="logoutBtn">ออกจากระบบ</button>
+    </header>
+
+    <section id="scanView" data-view="scan">
+      <div id="reader"></div>
+      <div class="scan-frame" id="scanFrame"></div>
+      <div class="scan-tip" id="scanTip">ส่อง QR ให้อยู่ในกรอบ</div>
+      <div class="cam-msg" id="camMsg" hidden>
+        <div id="camMsgText">กำลังเปิดกล้อง...</div>
+        <button type="button" class="btn btn-primary" id="camRetry" hidden>เปิดกล้องอีกครั้ง</button>
+      </div>
+      <div class="scan-actions">
+        <button type="button" class="btn btn-sm" id="typeCodeBtn">พิมพ์รหัสเอง</button>
+      </div>
+    </section>
+
+    <section data-view="search" class="page with-bottomnav" hidden>
+      <h2>ค้นหาผู้ลงทะเบียน</h2>
+      <form class="searchbar" id="searchForm">
+        <input type="search" id="searchInput" placeholder="เบอร์โทร ชื่อ หรือ MMID" autocomplete="off">
+        <button class="btn btn-primary" id="searchBtn">ค้นหา</button>
+      </form>
+      <div id="searchResults" class="list"></div>
+    </section>
+
+    <section data-view="register" class="page with-bottomnav" hidden>
+      <h2>ลงทะเบียนแทน</h2>
+      <p class="sub" style="color:var(--muted);font-size:14px;margin-top:-6px">สำหรับผู้ที่ยังไม่ได้ลงทะเบียน บันทึกแล้วจะเช็คอินให้ทันที</p>
+      <form id="regForm" class="panel" novalidate>
+        <div id="regError" class="alert" hidden></div>
+        <div class="field" data-f="full_name">
+          <label for="r_name">ชื่อ-นามสกุล<span class="req">*</span></label>
+          <input type="text" id="r_name" maxlength="100" autocomplete="off">
+          <div class="err">กรุณากรอกชื่อ-นามสกุล</div>
+        </div>
+        <div class="field" data-f="phone">
+          <label for="r_phone">เบอร์โทร<span class="req">*</span></label>
+          <input type="tel" id="r_phone" inputmode="numeric" maxlength="12" autocomplete="off">
+          <div class="err">กรุณากรอกเบอร์โทร 10 หลัก</div>
+        </div>
+        <div class="field" data-f="mmid">
+          <label for="r_mmid">MMID<span class="req">*</span></label>
+          <input type="text" id="r_mmid" maxlength="30" autocomplete="off">
+          <div class="err">กรุณากรอก MMID</div>
+        </div>
+        <div class="field">
+          <label for="r_company">ชื่อร้าน / บริษัท <span class="opt">(ถ้ามี)</span></label>
+          <input type="text" id="r_company" maxlength="100" autocomplete="off">
+        </div>
+        <label class="check" data-f="age20">
+          <input type="checkbox" id="r_age20">
+          <span>ตรวจบัตรประชาชนแล้ว อายุ 20 ปีบริบูรณ์ขึ้นไป<span class="req">*</span></span>
+        </label>
+        <label class="check" data-f="pdpa">
+          <input type="checkbox" id="r_pdpa">
+          <span>ผู้ลงทะเบียนยินยอมให้เก็บข้อมูลส่วนบุคคลเพื่อการเข้าร่วมงาน<span class="req">*</span></span>
+        </label>
+        <button class="btn btn-primary btn-block" id="regBtn">บันทึกและเช็คอิน</button>
+      </form>
+    </section>
+
+    <nav class="bottomnav">
+      <button type="button" data-nav="scan" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 12h10"/></svg>สแกน
+      </button>
+      <button type="button" data-nav="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>ค้นหา
+      </button>
+      <button type="button" data-nav="register">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="8" r="4"/><path d="M3 21c0-4 3-6 7-6M18 14v6M15 17h6"/></svg>ลงทะเบียนแทน
+      </button>
+    </nav>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    const SKEY = 'pe_staff';
+    let sess = loadSession(SKEY);
+    let view = 'scan';
+    let scanner = null;
+    let scannerState = 'off'; // off | starting | running | paused
+    let lastCode = '';
+    let lastCodeAt = 0;
+
+    api('config').then(function (cfg) {
+      if (cfg.ok && cfg.event_name) $all('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
+    });
+
+    try { $('#station').value = localStorage.getItem('pe_station') || ''; } catch (e) {}
+    if (sess) enterApp(); else $('#loginView').hidden = false;
+
+    // ---------- Login ----------
+    $('#loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const station = $('#station').value.trim();
+      const password = $('#password').value;
+      const errBox = $('#loginError');
+      if (!station) { errBox.textContent = 'กรุณาตั้งชื่อจุดสแกน เช่น จุด 1'; errBox.hidden = false; return; }
+      if (!password) { errBox.textContent = 'กรุณากรอกรหัส Staff'; errBox.hidden = false; return; }
+      const btn = $('#loginBtn');
+      btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+      const res = await api('login', { role: 'staff', password: password, station: station });
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      if (!res.ok) { errBox.textContent = res.error; errBox.hidden = false; return; }
+      errBox.hidden = true;
+      $('#password').value = '';
+      try { localStorage.setItem('pe_station', station); } catch (e2) {}
+      sess = { token: res.token, station: res.station, expires_at: res.expires_at };
+      saveSession(SKEY, sess);
+      enterApp();
+    });
+
+    function enterApp() {
+      $('#loginView').hidden = true;
+      $('#appView').hidden = false;
+      $('#stationLabel').textContent = sess.station;
+      showView('scan');
+    }
+
+    function logout(msg) {
+      if (sess) api('logout', { token: sess.token });
+      sess = null;
+      clearSession(SKEY);
+      stopScanner();
+      closeSheet();
+      $('#appView').hidden = true;
+      $('#loginView').hidden = false;
+      if (msg) { $('#loginError').textContent = msg; $('#loginError').hidden = false; }
+    }
+    $('#logoutBtn').addEventListener('click', function () { logout(); });
+
+    // เรียก API ที่ต้องล็อกอิน ถ้า token หมดอายุให้กลับไปหน้า login
+    async function authed(action, data) {
+      const res = await api(action, Object.assign({ token: sess && sess.token, device: deviceLabel(sess ? sess.station : '') }, data));
+      if (res.auth === false) logout('หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่');
+      return res;
+    }
+
+    // ---------- Navigation ----------
+    $all('[data-nav]').forEach(function (b) {
+      b.addEventListener('click', function () { showView(b.dataset.nav); });
+    });
+
+    function showView(name) {
+      view = name;
+      $all('[data-view]').forEach(function (s) { s.hidden = s.dataset.view !== name; });
+      $all('[data-nav]').forEach(function (b) { b.classList.toggle('active', b.dataset.nav === name); });
+      if (name === 'scan') startScanner(); else stopScanner();
+      if (name === 'search') setTimeout(function () { $('#searchInput').focus(); }, 50);
+    }
+
+    // ---------- Scanner ----------
+    async function startScanner() {
+      if (scannerState === 'running' || scannerState === 'starting') return;
+      if (scannerState === 'paused') { resumeScanner(); return; }
+      scannerState = 'starting';
+      showCamMsg('กำลังเปิดกล้อง...', false);
+      try {
+        scanner = scanner || new Html5Qrcode('reader', { verbose: false });
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: function (w, h) { const s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; } },
+          onScan,
+          function () {}
+        );
+        scannerState = 'running';
+        $('#camMsg').hidden = true;
+        if (view !== 'scan') stopScanner();
+      } catch (err) {
+        scannerState = 'off';
+        showCamMsg('เปิดกล้องไม่ได้ กรุณาอนุญาตให้เว็บนี้ใช้กล้อง (ดูที่แถบที่อยู่เว็บ) แล้วกดเปิดกล้องอีกครั้ง หรือใช้ปุ่ม "พิมพ์รหัสเอง" / เมนูค้นหา', true);
+      }
+    }
+
+    function showCamMsg(text, retry) {
+      $('#camMsg').hidden = false;
+      $('#camMsgText').textContent = text;
+      $('#camRetry').hidden = !retry;
+    }
+    $('#camRetry').addEventListener('click', startScanner);
+
+    async function stopScanner() {
+      if (scanner && (scannerState === 'running' || scannerState === 'paused')) {
+        try { await scanner.stop(); } catch (e) {}
+      }
+      scannerState = 'off';
+    }
+
+    function pauseScanner() {
+      if (scannerState === 'running') {
+        try { scanner.pause(true); scannerState = 'paused'; } catch (e) {}
+      }
+    }
+
+    function resumeScanner() {
+      if (view !== 'scan') return;
+      if (scannerState === 'paused') {
+        try { scanner.resume(); scannerState = 'running'; } catch (e) { scannerState = 'off'; startScanner(); }
+      } else if (scannerState === 'off') {
+        startScanner();
+      }
+    }
+
+    function onScan(text) {
+      const code = String(text || '').trim().toUpperCase();
+      const now = Date.now();
+      if (!code || (code === lastCode && now - lastCodeAt < 3000)) return;
+      lastCode = code; lastCodeAt = now;
+      if (navigator.vibrate) navigator.vibrate(80);
+      pauseScanner();
+      lookupCode(code);
+    }
+
+    $('#typeCodeBtn').addEventListener('click', function () {
+      pauseScanner();
+      const ov = openSheet(
+        '<div class="sheet-head plain">พิมพ์รหัสจาก QR</div>' +
+        '<form class="sheet-body" id="codeForm"><div class="field"><input type="text" id="codeInput" placeholder="เช่น PE7KX3M9QA2B" autocomplete="off" style="text-transform:uppercase"></div>' +
+        '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary">ค้นหา</button></div></form>',
+        resumeScanner
+      );
+      $('#codeInput', ov).focus();
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#codeForm', ov).addEventListener('submit', function (e) {
+        e.preventDefault();
+        const code = $('#codeInput', ov).value.trim().toUpperCase();
+        if (!code) return;
+        ov._onClose = null;
+        closeSheet();
+        lookupCode(code);
+      });
+    });
+
+    async function lookupCode(code) {
+      openSheet('<div class="sheet-head plain">กำลังตรวจสอบ <span class="spinner"></span><small>' + esc(code) + '</small></div><div class="sheet-body"></div>', resumeScanner);
+      const res = await authed('scan', { reg_id: code });
+      if (!sess) return;
+      if (!res.ok) { showError(res.error); return; }
+      showResult(res.result, res.person, code);
+    }
+
+    // ---------- Result card ----------
+    // result: found | ok | duplicate | not_found
+    function showResult(result, p, code, extraNote) {
+      let head, body = '', foot = '';
+      const onClose = view === 'scan' ? resumeScanner : null;
+      if (result === 'found') {
+        head = '<div class="sheet-head ok">พบข้อมูล ยังไม่เช็คอิน</div>';
+        body = personDetails(p) + '<div class="id-check">ตรวจบัตรประชาชน อายุ 20 ปีขึ้นไป</div>';
+        foot = '<button class="btn btn-ok btn-xl btn-block" id="confirmBtn">ยืนยันเช็คอิน</button>' +
+               '<button class="btn btn-ghost btn-block" data-close>ยกเลิก</button>';
+      } else if (result === 'ok') {
+        head = '<div class="sheet-head ok">เช็คอินเรียบร้อย' + (extraNote ? '<small>' + esc(extraNote) + '</small>' : '') + '</div>';
+        body = personDetails(p);
+        foot = '<button class="btn btn-primary btn-xl btn-block" data-close>' + (view === 'scan' ? 'สแกนคนต่อไป' : 'ปิด') + '</button>';
+      } else if (result === 'duplicate') {
+        head = '<div class="sheet-head warn">เช็คอินแล้วเมื่อ ' + esc(p.checked_in_at || '-') + ' น.<small>โดย ' + esc(p.checked_in_by || '-') + '</small></div>';
+        body = personDetails(p) + '<div class="id-check">ตรวจบัตรประชาชนให้ตรงกับชื่อ ก่อนให้เข้างาน</div>';
+        foot = '<button class="btn btn-primary btn-xl btn-block" data-close>' + (view === 'scan' ? 'สแกนคนต่อไป' : 'ปิด') + '</button>';
+      } else {
+        head = '<div class="sheet-head bad">ไม่พบข้อมูล<small>รหัส ' + esc(code || '-') + '</small></div>';
+        body = '<p>ไม่พบรหัสนี้ในระบบ ลองค้นหาด้วยเบอร์โทรหรือชื่อ หรือลงทะเบียนแทน</p>';
+        foot = '<button class="btn btn-primary btn-block" id="goSearch">ค้นหาด้วยเบอร์ / ชื่อ</button>' +
+               '<button class="btn btn-ghost btn-block" data-close>' + (view === 'scan' ? 'สแกนต่อ' : 'ปิด') + '</button>';
+      }
+      const ov = openSheet(head + '<div class="sheet-body">' + body + '</div><div class="sheet-foot">' + foot + '</div>', onClose);
+      $all('[data-close]', ov).forEach(function (b) { b.addEventListener('click', closeSheet); });
+      const confirmBtn = $('#confirmBtn', ov);
+      if (confirmBtn) confirmBtn.addEventListener('click', function () { doCheckin(p, confirmBtn); });
+      const goSearch = $('#goSearch', ov);
+      if (goSearch) goSearch.addEventListener('click', function () { ov._onClose = null; closeSheet(); showView('search'); });
+    }
+
+    function showError(msg) {
+      const ov = openSheet('<div class="sheet-head bad">เกิดข้อผิดพลาด</div><div class="sheet-body"><p>' + esc(msg) + '</p></div>' +
+        '<div class="sheet-foot"><button class="btn btn-primary btn-block" data-close>ตกลง</button></div>', view === 'scan' ? resumeScanner : null);
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+    }
+
+    async function doCheckin(p, btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'กำลังบันทึก <span class="spinner"></span>';
+      const res = await authed('checkin', { reg_id: p.reg_id });
+      if (!sess) return;
+      if (!res.ok) { btn.disabled = false; btn.textContent = 'ยืนยันเช็คอิน'; toast(res.error, true); return; }
+      const ov = $('#sheetOverlay');
+      if (ov) ov._onClose = null;
+      showResult(res.result, res.person || p, p.reg_id);
+      if (res.result === 'ok' && navigator.vibrate) navigator.vibrate([60, 60, 60]);
+    }
+
+    // ---------- Search ----------
+    $('#searchForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const q = $('#searchInput').value.trim();
+      const box = $('#searchResults');
+      if (q.length < 2) { box.innerHTML = '<div class="empty">พิมพ์อย่างน้อย 2 ตัวอักษร</div>'; return; }
+      box.innerHTML = '<div class="empty"><span class="spinner"></span></div>';
+      const res = await authed('search', { q: q });
+      if (!sess) return;
+      if (!res.ok) { box.innerHTML = '<div class="empty">' + esc(res.error) + '</div>'; return; }
+      if (!res.results.length) {
+        box.innerHTML = '<div class="empty">ไม่พบข้อมูล<br><br><button type="button" class="btn btn-outline" id="toRegister">ลงทะเบียนแทน</button></div>';
+        $('#toRegister').addEventListener('click', function () { showView('register'); });
+        return;
+      }
+      box.innerHTML = '';
+      res.results.forEach(function (p) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'item';
+        b.innerHTML = '<div><div class="name">' + esc(p.full_name) + '</div><div class="meta2">' +
+          esc(p.phone) + ' · MMID ' + esc(p.mmid) + (p.company ? ' · ' + esc(p.company) : '') + '</div></div>' + statusBadge(p.status);
+        b.addEventListener('click', function () { showResult(p.status === 'มาแล้ว' ? 'duplicate' : 'found', p, p.reg_id); });
+        box.appendChild(b);
+      });
+    });
+
+    // ---------- Register on behalf ----------
+    const regForm = $('#regForm');
+    regForm.addEventListener('input', function (e) {
+      const f = e.target.closest('[data-f]');
+      if (f) f.classList.remove('invalid');
+    });
+    regForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const data = {
+        full_name: $('#r_name').value.trim(),
+        phone: cleanPhone($('#r_phone').value),
+        mmid: $('#r_mmid').value.trim(),
+        company: $('#r_company').value.trim(),
+        age20: $('#r_age20').checked,
+        pdpa: $('#r_pdpa').checked
+      };
+      const bad = [];
+      if (!data.full_name) bad.push('full_name');
+      if (!/^0\d{9}$/.test(data.phone)) bad.push('phone');
+      if (!data.mmid) bad.push('mmid');
+      if (!data.age20) bad.push('age20');
+      if (!data.pdpa) bad.push('pdpa');
+      $all('[data-f]', regForm).forEach(function (el) { el.classList.toggle('invalid', bad.indexOf(el.dataset.f) !== -1); });
+      const errBox = $('#regError');
+      if (bad.length) { errBox.textContent = 'กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน'; errBox.hidden = false; return; }
+      errBox.hidden = true;
+
+      const btn = $('#regBtn');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      const res = await authed('staff_register', data);
+      btn.disabled = false; btn.textContent = 'บันทึกและเช็คอิน';
+      if (!sess) return;
+      if (!res.ok) { errBox.textContent = res.error; errBox.hidden = false; return; }
+      regForm.reset();
+      showResult(res.result, res.person, res.person && res.person.reg_id,
+        res.existing ? 'ผู้นี้ลงทะเบียนไว้แล้ว ใช้ข้อมูลเดิม' : 'ลงทะเบียนใหม่ (Staff)');
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stopScanner();
+      else if (sess && view === 'scan' && !$('#sheetOverlay')) startScanner();
+    });
+  </script>
+</body>
+</html>
