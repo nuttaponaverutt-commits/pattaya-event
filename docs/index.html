@@ -3,53 +3,199 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pattaya Event</title>
-  <style>
-    :root { --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7280; --ok: #15803d; --err: #b91c1c; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg: #111418; --card: #1b2027; --text: #e6e8eb; --muted: #9aa3ad; --ok: #4ade80; --err: #f87171; }
-    }
-    body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Sarabun", sans-serif; }
-    main { max-width: 480px; margin: 48px auto; padding: 0 16px; }
-    .card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    h1 { font-size: 1.3rem; margin: 0 0 16px; }
-    #status { font-size: 1.1rem; font-weight: 600; }
-    .ok { color: var(--ok); } .err { color: var(--err); }
-    small { color: var(--muted); display: block; margin-top: 12px; word-break: break-all; }
-    button { margin-top: 16px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--muted); background: transparent; color: var(--text); cursor: pointer; }
-  </style>
+  <title>ลงทะเบียนเข้าร่วมงาน</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<main>
-  <div class="card">
-    <h1>Pattaya Event — ทดสอบการเชื่อมต่อ</h1>
-    <div id="status">กำลังเชื่อมต่อ...</div>
-    <small id="detail"></small>
-    <button onclick="check()">ทดสอบอีกครั้ง</button>
-  </div>
-</main>
-<script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbyW_wPvTkL8cgAu0Wj5XU-ZWajby3AXXOt9enrQIdTOp8sRVr3Uy81B3awiYhbApI8D/exec';
+  <header class="topbar">
+    <div class="wrap">
+      <span class="js-event-name">Pattaya Event</span>
+      <a href="myqr.html">ดู QR ของฉัน</a>
+    </div>
+  </header>
 
-  async function check() {
-    const status = document.getElementById('status');
-    const detail = document.getElementById('detail');
-    status.className = ''; status.textContent = 'กำลังเชื่อมต่อ...'; detail.textContent = '';
-    const t0 = performance.now();
-    try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      if (!data.ok) throw new Error('ได้รับคำตอบแต่ ok ไม่เป็น true');
-      status.className = 'ok';
-      status.textContent = '✅ เชื่อมต่อ Apps Script สำเร็จ';
-      detail.textContent = 'ใช้เวลา ' + Math.round(performance.now() - t0) + ' ms';
-    } catch (e) {
-      status.className = 'err';
-      status.textContent = '❌ เชื่อมต่อไม่สำเร็จ';
-      detail.textContent = e.message;
+  <!-- เปลี่ยน KV: วางไฟล์ docs/assets/kv.jpg แล้วรูปจะขึ้นแทน placeholder เอง -->
+  <div id="hero" class="hero hero-placeholder">Key Visual</div>
+
+  <main id="landing">
+    <div class="narrow">
+      <section class="event">
+        <h1 class="js-event-name">Pattaya Event</h1>
+        <div class="meta">
+          <span>วันที่ <b id="eventDate">จะแจ้งให้ทราบ</b></span>
+          <span>สถานที่ <b id="eventVenue">Pattaya</b></span>
+        </div>
+        <div class="actions">
+          <a href="#register" class="btn btn-primary btn-block" id="ctaRegister">ลงทะเบียนเข้าร่วมงาน</a>
+          <a href="myqr.html" class="btn btn-outline btn-block">ลงทะเบียนแล้ว ดู QR อีกครั้ง</a>
+        </div>
+        <p class="notice">งานนี้สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น กรุณาแสดงบัตรประชาชนที่หน้างาน</p>
+      </section>
+
+      <section class="section" id="register">
+        <h2>ลงทะเบียน</h2>
+        <p class="sub">กรอกข้อมูลให้ครบ เมื่อส่งแล้วจะได้รับ QR สำหรับเข้างาน</p>
+
+        <div id="closedBox" class="alert" hidden></div>
+        <div id="loadingBox" class="loading">กำลังโหลด...</div>
+
+        <form id="regForm" class="panel" novalidate hidden>
+          <div id="formError" class="alert" hidden></div>
+
+          <div class="field" data-f="full_name">
+            <label for="full_name">ชื่อ-นามสกุล<span class="req">*</span></label>
+            <input type="text" id="full_name" name="full_name" autocomplete="name" maxlength="100">
+            <div class="err">กรุณากรอกชื่อ-นามสกุล</div>
+          </div>
+
+          <div class="field" data-f="phone">
+            <label for="phone">เบอร์โทรศัพท์มือถือ<span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
+            <div class="err">กรุณากรอกเบอร์โทร 10 หลัก</div>
+          </div>
+
+          <div class="field" data-f="mmid">
+            <label for="mmid">MMID<span class="req">*</span></label>
+            <input type="text" id="mmid" name="mmid" maxlength="30" autocomplete="off">
+            <div class="help">หมายเลขสมาชิก Makro ของคุณ</div>
+            <div class="err">กรุณากรอก MMID</div>
+          </div>
+
+          <div class="field" data-f="company">
+            <label for="company">ชื่อร้าน / บริษัท <span class="opt">(ถ้ามี)</span></label>
+            <input type="text" id="company" name="company" maxlength="100" autocomplete="organization">
+          </div>
+
+          <label class="check" data-f="age20">
+            <input type="checkbox" id="age20">
+            <span>ข้าพเจ้ายืนยันว่ามีอายุ 20 ปีบริบูรณ์ขึ้นไป และจะแสดงบัตรประชาชนที่หน้างาน<span class="req">*</span></span>
+          </label>
+
+          <label class="check" data-f="pdpa">
+            <input type="checkbox" id="pdpa">
+            <span>ข้าพเจ้ายินยอมให้ผู้จัดงานเก็บและใช้ข้อมูล ชื่อ เบอร์โทรศัพท์ MMID และชื่อร้าน เพื่อการลงทะเบียน การเข้าร่วมงาน และการติดต่อที่เกี่ยวข้องกับงานนี้<span class="req">*</span></span>
+          </label>
+
+          <button type="submit" class="btn btn-primary btn-block" id="submitBtn">ส่งข้อมูลลงทะเบียน</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <main id="resultView" hidden>
+    <div class="narrow section result">
+      <h2 id="resultTitle">ลงทะเบียนสำเร็จ</h2>
+      <p class="sub" id="resultSub">กรุณาบันทึกรูป QR นี้ไว้ และแสดงพร้อมบัตรประชาชนที่หน้างาน</p>
+      <div id="qrHost"></div>
+      <div class="links"><a href="./">กลับหน้าแรก</a></div>
+    </div>
+  </main>
+
+  <footer>&copy; <span class="js-event-name">Pattaya Event</span></footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/common.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const isWalkin = params.get('src') === 'walkin';
+    let eventInfo = {};
+
+    loadHero(document.getElementById('hero'));
+
+    (async function init() {
+      const cfg = await api('config');
+      document.getElementById('loadingBox').hidden = true;
+      if (!cfg.ok) {
+        showClosed(cfg.error || 'ไม่สามารถโหลดข้อมูลงานได้ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+      eventInfo = cfg;
+      if (cfg.event_name) {
+        document.querySelectorAll('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
+        document.title = 'ลงทะเบียน | ' + cfg.event_name;
+      }
+      if (cfg.event_date) document.getElementById('eventDate').textContent = thaiDate(cfg.event_date);
+      if (cfg.event_venue) document.getElementById('eventVenue').textContent = cfg.event_venue;
+
+      if (!cfg.registration_open) {
+        showClosed(cfg.closed_reason + ' หากลงทะเบียนไว้แล้ว สามารถดู QR ได้จากปุ่ม "ดู QR อีกครั้ง"');
+        document.getElementById('ctaRegister').hidden = true;
+        return;
+      }
+      document.getElementById('regForm').hidden = false;
+      if (isWalkin) document.getElementById('register').scrollIntoView();
+    })();
+
+    function showClosed(msg) {
+      const box = document.getElementById('closedBox');
+      box.textContent = msg;
+      box.hidden = false;
     }
-  }
-  check();
-</script>
+
+    const form = document.getElementById('regForm');
+    form.addEventListener('input', function (e) {
+      const f = e.target.closest('[data-f]');
+      if (f) f.classList.remove('invalid');
+    });
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const data = {
+        full_name: form.full_name.value.trim(),
+        phone: cleanPhone(form.phone.value),
+        mmid: form.mmid.value.trim(),
+        company: form.company.value.trim(),
+        age20: document.getElementById('age20').checked,
+        pdpa: document.getElementById('pdpa').checked,
+        src: isWalkin ? 'walkin' : ''
+      };
+      const bad = [];
+      if (!data.full_name) bad.push('full_name');
+      if (!/^0\d{9}$/.test(data.phone)) bad.push('phone');
+      if (!data.mmid) bad.push('mmid');
+      if (!data.age20) bad.push('age20');
+      if (!data.pdpa) bad.push('pdpa');
+      form.querySelectorAll('[data-f]').forEach(function (el) {
+        el.classList.toggle('invalid', bad.indexOf(el.dataset.f) !== -1);
+      });
+      const errBox = document.getElementById('formError');
+      if (bad.length) {
+        errBox.textContent = 'กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน';
+        errBox.hidden = false;
+        form.querySelector('[data-f="' + bad[0] + '"]').scrollIntoView({ block: 'center' });
+        return;
+      }
+      errBox.hidden = true;
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'กำลังส่งข้อมูล...';
+      const res = await api('register', data);
+      btn.disabled = false;
+      btn.textContent = 'ส่งข้อมูลลงทะเบียน';
+
+      if (!res.ok) {
+        errBox.textContent = res.error;
+        errBox.hidden = false;
+        errBox.scrollIntoView({ block: 'center' });
+        return;
+      }
+      saveMyReg(res);
+      document.getElementById('landing').hidden = true;
+      document.getElementById('hero').hidden = true;
+      document.getElementById('resultView').hidden = false;
+      if (res.existing) {
+        document.getElementById('resultTitle').textContent = 'คุณลงทะเบียนไว้แล้ว';
+        document.getElementById('resultSub').textContent = 'เบอร์โทรหรือ MMID นี้ลงทะเบียนไว้แล้ว นี่คือ QR เดิมของคุณ กรุณาแสดงพร้อมบัตรประชาชนที่หน้างาน';
+      }
+      window.scrollTo(0, 0);
+      await showQrCard(document.getElementById('qrHost'), Object.assign({}, eventInfo, res));
+    });
+  </script>
 </body>
 </html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ดู QR ของฉัน</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <span class="js-event-name">Pattaya Event</span>
+      <a href="./">หน้าแรก</a>
+    </div>
+  </header>
+
+  <main class="narrow section">
+    <section id="lookupView">
+      <h2>ดู QR อีกครั้ง</h2>
+      <p class="sub">กรอกเบอร์โทรศัพท์ที่ใช้ลงทะเบียน</p>
+      <form id="lookupForm" class="panel" novalidate>
+        <div id="lookupError" class="alert" hidden></div>
+        <div class="field" data-f="phone">
+          <label for="phone">เบอร์โทรศัพท์มือถือ<span class="req">*</span></label>
+          <input type="tel" id="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
+          <div class="err">กรุณากรอกเบอร์โทร 10 หลัก</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="lookupBtn">ค้นหา QR</button>
+      </form>
+      <p class="links center">ยังไม่ได้ลงทะเบียน? <a href="./#register">ลงทะเบียนที่นี่</a></p>
+    </section>
+
+    <section id="resultView" class="result" hidden>
+      <h2>QR สำหรับเข้างาน</h2>
+      <p class="sub">แสดง QR นี้พร้อมบัตรประชาชนที่หน้างาน</p>
+      <div id="qrHost"></div>
+      <div class="links"><a href="#" id="notMe">ไม่ใช่ QR ของคุณ? ค้นหาด้วยเบอร์โทร</a></div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/common.js"></script>
+  <script>
+    let eventInfo = {};
+    const cfgPromise = api('config').then(function (cfg) {
+      if (cfg.ok) {
+        eventInfo = cfg;
+        if (cfg.event_name) document.querySelectorAll('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
+      }
+    });
+
+    async function show(reg) {
+      await cfgPromise;
+      document.getElementById('lookupView').hidden = true;
+      document.getElementById('resultView').hidden = false;
+      await showQrCard(document.getElementById('qrHost'), Object.assign({}, eventInfo, reg));
+    }
+
+    const saved = loadMyReg();
+    if (saved && saved.reg_id) show(saved);
+
+    document.getElementById('notMe').addEventListener('click', function (e) {
+      e.preventDefault();
+      document.getElementById('resultView').hidden = true;
+      document.getElementById('lookupView').hidden = false;
+      document.getElementById('phone').focus();
+    });
+
+    document.getElementById('lookupForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const field = document.querySelector('[data-f="phone"]');
+      const phone = cleanPhone(document.getElementById('phone').value);
+      const errBox = document.getElementById('lookupError');
+      errBox.hidden = true;
+      if (!/^0\d{9}$/.test(phone)) { field.classList.add('invalid'); return; }
+      field.classList.remove('invalid');
+
+      const btn = document.getElementById('lookupBtn');
+      btn.disabled = true;
+      btn.textContent = 'กำลังค้นหา...';
+      const res = await api('lookup', { phone: phone });
+      btn.disabled = false;
+      btn.textContent = 'ค้นหา QR';
+      if (!res.ok) {
+        errBox.textContent = res.error;
+        errBox.hidden = false;
+        return;
+      }
+      saveMyReg(res);
+      show(res);
+    });
+  </script>
+</body>
+</html>
