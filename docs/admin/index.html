@@ -78,6 +78,10 @@
     .row-actions button.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
     .row-actions button.del { color: var(--bad); }
     .muted { color: var(--muted); font-size: 12px; }
+    @media (min-width: 900px) {
+      table.reg .row-actions { flex-wrap: nowrap; }
+      table.reg td .muted { white-space: nowrap; }
+    }
 
     /* รายชื่อบนมือถือแสดงเป็นการ์ด */
     @media (max-width: 899px) {
