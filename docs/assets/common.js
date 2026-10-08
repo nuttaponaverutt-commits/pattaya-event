@@ -1,15 +1,30 @@
+// คำสั่งที่ส่งซ้ำได้ปลอดภัย (ส่งซ้ำแล้วไม่เกิดข้อมูลซ้ำ) ใช้ลองใหม่อัตโนมัติตอนเน็ตสะดุดหรือระบบยุ่ง
+const RETRY_SAFE = ['config', 'register', 'lookup', 'login', 'scan', 'checkin', 'search', 'staff_register',
+  'dashboard', 'list', 'sales_names', 'links', 'draw_list', 'logout'];
+
 // เรียก API (text/plain เพื่อไม่ให้เบราว์เซอร์ส่ง CORS preflight)
 async function api(action, data) {
-  try {
-    const res = await fetch(window.API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ action: action }, data || {}))
-    });
-    return await res.json();
-  } catch (e) {
-    return { ok: false, network: true, error: 'เชื่อมต่อระบบไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่' };
+  const tries = RETRY_SAFE.indexOf(action) !== -1 ? 4 : 1;
+  let last;
+  for (let i = 0; i < tries; i++) {
+    if (i > 0) await new Promise(function (r) { setTimeout(r, 1200 * i + Math.random() * 1200); });
+    try {
+      const res = await fetch(window.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ action: action }, data || {}))
+      });
+      // ตอน Google รับคำขอไม่ไหว จะตอบเป็นหน้า HTML ไม่ใช่ JSON ให้ถือเป็นระบบยุ่ง
+      last = await res.json().catch(function () { return { ok: false, busy: true, error: 'ระบบกำลังยุ่ง กรุณาลองใหม่อีกครั้ง' }; });
+      if (!last.busy) {
+        if (i > 0) last._retried = true;
+        return last;
+      }
+    } catch (e) {
+      last = { ok: false, network: true, error: 'เชื่อมต่อระบบไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่' };
+    }
   }
+  return last;
 }
 
 function thaiDate(s) {
@@ -98,9 +113,13 @@ async function drawQrCard(info) {
     }
   }
 
+  // รหัสสำรอง 5 ตัว ให้ Staff พิมพ์แทนเมื่อสแกนไม่ได้
+  g.fillStyle = '#6c675d';
+  g.font = '400 22px ' + font;
+  g.fillText('รหัสเข้างาน (กรณีสแกนไม่ได้)', CARD_W / 2, y0 + qrPx + 34);
   g.fillStyle = '#1c1b18';
-  g.font = '600 34px "IBM Plex Mono", monospace';
-  g.fillText(info.reg_id, CARD_W / 2, y0 + qrPx + 46);
+  g.font = '600 46px "IBM Plex Mono", monospace';
+  g.fillText(spaced(info.short_code || info.reg_id), CARD_W / 2, y0 + qrPx + 84);
 
   g.strokeStyle = '#ddd5c4';
   g.lineWidth = 2;
@@ -114,6 +133,11 @@ async function drawQrCard(info) {
   g.fillText('สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น', CARD_W / 2, 948);
 
   return c.toDataURL('image/png');
+}
+
+function spaced(code) {
+  const c = String(code || '');
+  return c.length <= 6 ? c.split('').join(' ') : c;
 }
 
 function roundRect(g, x, y, w, h, r, fill) {
@@ -159,7 +183,7 @@ async function showQrCard(host, info) {
 }
 
 function saveMyReg(info) {
-  try { localStorage.setItem('pe_reg', JSON.stringify({ reg_id: info.reg_id, full_name: info.full_name, tier: info.tier })); } catch (e) {}
+  try { localStorage.setItem('pe_reg', JSON.stringify({ reg_id: info.reg_id, full_name: info.full_name, tier: info.tier, short_code: info.short_code })); } catch (e) {}
 }
 
 function loadMyReg() {

@@ -23,7 +23,10 @@
     .scan-tip { position: absolute; left: 0; right: 0; bottom: 84px; text-align: center; color: #fff; font-size: 15px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
     .scan-actions { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; gap: 10px; }
     .scan-actions .btn { flex: 1; background: rgba(255,255,255,.95); color: var(--navy); }
-    .cam-msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; text-align: center; padding: 24px; }
+    .cam-msg { position: absolute; inset: 0 0 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; text-align: center; padding: 24px; background: #0b0b0a; z-index: 2; }
+    .cam-msg .steps { text-align: left; font-size: 14px; color: #d8d2c4; max-width: 340px; line-height: 1.7; }
+    .cam-msg .btn { min-width: 200px; }
+    .cam-msg .btn-outline { border-color: #fff; color: #fff; }
     .page { padding: 20px 16px; max-width: 560px; margin: 0 auto; }
     .page h2 { font-size: 19px; color: var(--navy); margin: 0 0 14px; }
     .searchbar { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -63,10 +66,14 @@
       <div class="scan-tip" id="scanTip">ส่อง QR ให้อยู่ในกรอบ</div>
       <div class="cam-msg" id="camMsg" hidden>
         <div id="camMsgText">กำลังเปิดกล้อง...</div>
+        <div class="steps" id="camSteps" hidden></div>
+        <a class="btn btn-primary" id="camExternal" hidden>เปิดในเบราว์เซอร์</a>
+        <button type="button" class="btn btn-outline" id="camCopy" hidden>คัดลอกลิงก์หน้านี้</button>
         <button type="button" class="btn btn-primary" id="camRetry" hidden>เปิดกล้องอีกครั้ง</button>
       </div>
       <div class="scan-actions">
         <button type="button" class="btn btn-sm" id="typeCodeBtn">พิมพ์รหัสเอง</button>
+        <button type="button" class="btn btn-sm" id="switchCamBtn" hidden>สลับกล้อง</button>
       </div>
     </section>
 
@@ -153,7 +160,6 @@
     });
 
     try { $('#station').value = localStorage.getItem('pe_station') || ''; } catch (e) {}
-    if (sess) enterApp(); else $('#loginView').hidden = false;
 
     // ---------- Login ----------
     $('#loginForm').addEventListener('submit', async function (e) {
@@ -216,41 +222,124 @@
     }
 
     // ---------- Scanner ----------
-    async function startScanner() {
-      if (scannerState === 'running' || scannerState === 'starting') return;
-      if (scannerState === 'paused') { resumeScanner(); return; }
-      scannerState = 'starting';
-      showCamMsg('กำลังเปิดกล้อง...', false);
+    // คำสั่งเปิด/ปิดกล้องทำต่อกันเป็นคิว กันการเปิดซ้อนตอนกล้องยังปิดไม่เสร็จ (สาเหตุกล้องค้างจอดำ)
+    let camQueue = Promise.resolve();
+    let cameras = null;   // รายการกล้อง (ได้หลังอนุญาตแล้ว)
+    let camIndex = -1;    // -1 = ให้เบราว์เซอร์เลือกกล้องหลังเอง
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const inAppBrowser = /\bLine\//i.test(ua) ? 'LINE' : /FBAN|FBAV|FB_IAB/.test(ua) ? 'Facebook' : /Instagram/.test(ua) ? 'Instagram' : '';
+
+    function camTask(fn) {
+      camQueue = camQueue.then(fn).catch(function (e) { console.warn(e); });
+      return camQueue;
+    }
+    function startScanner() { return camTask(doStart); }
+    function stopScanner() { return camTask(doStop); }
+
+    async function doStart() {
+      if (view !== 'scan' || document.hidden || scannerState !== 'off' || $('#sheetOverlay')) return;
+      const block = cameraBlocker();
+      if (block) { showCamMsg(block); return; }
+      showCamMsg({ text: 'กำลังเปิดกล้อง...' });
+      scanner = new Html5Qrcode('reader', {
+        verbose: false,
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+      });
+      const source = camIndex >= 0 && cameras && cameras[camIndex] ? cameras[camIndex].id : { facingMode: 'environment' };
       try {
-        scanner = scanner || new Html5Qrcode('reader', { verbose: false });
-        await scanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: function (w, h) { const s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; } },
-          onScan,
-          function () {}
-        );
+        await scanner.start(source, {
+          fps: 12,
+          qrbox: function (w, h) { const s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; }
+        }, onScan, function () {});
         scannerState = 'running';
         $('#camMsg').hidden = true;
-        if (view !== 'scan') stopScanner();
+        if (!cameras) {
+          cameras = await Html5Qrcode.getCameras().catch(function () { return []; });
+          $('#switchCamBtn').hidden = cameras.length < 2;
+        }
+        // ระหว่างเปิดกล้อง ผู้ใช้อาจสลับเมนูหรือสลับแอปไปแล้ว
+        if (view !== 'scan' || document.hidden) await doStop();
       } catch (err) {
+        try { scanner.clear(); } catch (e) {}
         scannerState = 'off';
-        showCamMsg('เปิดกล้องไม่ได้ กรุณาอนุญาตให้เว็บนี้ใช้กล้อง (ดูที่แถบที่อยู่เว็บ) แล้วกดเปิดกล้องอีกครั้ง หรือใช้ปุ่ม "พิมพ์รหัสเอง" / เมนูค้นหา', true);
+        const name = String((err && (err.name || err.message)) || err);
+        // เลือกกล้องหลังอัตโนมัติไม่ได้ ลองกล้องตัวสุดท้ายในรายการ (ส่วนใหญ่คือกล้องหลัง)
+        if (camIndex < 0 && /Overconstrained|NotFound|constraint/i.test(name)) {
+          cameras = await Html5Qrcode.getCameras().catch(function () { return []; });
+          if (cameras.length) { camIndex = cameras.length - 1; return doStart(); }
+        }
+        showCamMsg(cameraError(name));
       }
     }
 
-    function showCamMsg(text, retry) {
-      $('#camMsg').hidden = false;
-      $('#camMsgText').textContent = text;
-      $('#camRetry').hidden = !retry;
-    }
-    $('#camRetry').addEventListener('click', startScanner);
-
-    async function stopScanner() {
-      if (scanner && (scannerState === 'running' || scannerState === 'paused')) {
+    async function doStop() {
+      if (scanner && scannerState !== 'off') {
         try { await scanner.stop(); } catch (e) {}
+        try { scanner.clear(); } catch (e) {}
       }
       scannerState = 'off';
     }
+
+    function cameraBlocker() {
+      if (inAppBrowser) {
+        return {
+          text: 'เบราว์เซอร์ในแอป ' + inAppBrowser + ' เปิดกล้องไม่ได้',
+          steps: inAppBrowser === 'LINE'
+            ? 'กดปุ่ม "เปิดในเบราว์เซอร์" ด้านล่าง หน้านี้จะเปิดใน ' + (isIOS ? 'Safari' : 'Chrome') + ' แล้วล็อกอินอีกครั้ง'
+            : 'กดเมนู ⋯ มุมขวาบน แล้วเลือก "เปิดในเบราว์เซอร์" หรือคัดลอกลิงก์ไปเปิดใน ' + (isIOS ? 'Safari' : 'Chrome'),
+          external: inAppBrowser === 'LINE',
+          copy: true
+        };
+      }
+      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        return { text: 'เบราว์เซอร์นี้ไม่รองรับกล้อง', steps: 'กรุณาเปิดหน้านี้ใน ' + (isIOS ? 'Safari' : 'Chrome') + ' เวอร์ชันล่าสุด', copy: true };
+      }
+      return null;
+    }
+
+    function cameraError(name) {
+      if (/NotAllowed|Permission|denied/i.test(name)) {
+        return {
+          text: 'ยังไม่ได้อนุญาตให้ใช้กล้อง',
+          steps: isIOS
+            ? '1. เปิด การตั้งค่า > Safari > กล้อง แล้วเลือก "อนุญาต"<br>2. กลับมาที่หน้านี้แล้วกดรีเฟรช<br>3. ถ้ามีหน้าต่างถามสิทธิ์ ให้กด "อนุญาต"'
+            : '1. แตะไอคอนหน้าที่อยู่เว็บ (รูปแม่กุญแจหรือปรับแต่ง)<br>2. เลือก สิทธิ์ > กล้อง > อนุญาต<br>3. กดปุ่ม "เปิดกล้องอีกครั้ง"',
+          retry: true
+        };
+      }
+      if (/NotReadable|TrackStart|Could not start|in use/i.test(name)) {
+        return { text: 'กล้องถูกแอปอื่นใช้อยู่', steps: 'ปิดแอปกล้อง วิดีโอคอล หรือแท็บอื่นที่เปิดกล้องอยู่ แล้วกด "เปิดกล้องอีกครั้ง"', retry: true };
+      }
+      if (/NotFound|no camera/i.test(name)) {
+        return { text: 'ไม่พบกล้องในเครื่องนี้', steps: 'ใช้ปุ่ม "พิมพ์รหัสเอง" หรือเมนูค้นหาแทน', retry: true };
+      }
+      return { text: 'เปิดกล้องไม่ได้', steps: 'ลองกด "เปิดกล้องอีกครั้ง" ถ้ายังไม่ได้ ให้ปิดแล้วเปิดเบราว์เซอร์ใหม่ ระหว่างนี้ใช้ปุ่ม "พิมพ์รหัสเอง" หรือเมนูค้นหาได้<br><small>(' + esc(name).slice(0, 80) + ')</small>', retry: true };
+    }
+
+    function showCamMsg(m) {
+      $('#camMsg').hidden = false;
+      $('#camMsgText').textContent = m.text;
+      $('#camSteps').innerHTML = m.steps || '';
+      $('#camSteps').hidden = !m.steps;
+      $('#camRetry').hidden = !m.retry;
+      $('#camCopy').hidden = !m.copy;
+      const ext = $('#camExternal');
+      ext.hidden = !m.external;
+      if (m.external) ext.href = location.href.split('#')[0] + (location.search ? '&' : '?') + 'openExternalBrowser=1';
+    }
+    $('#camRetry').addEventListener('click', function () { if (isIOS && /อนุญาต/.test($('#camMsgText').textContent)) location.reload(); else startScanner(); });
+    $('#camCopy').addEventListener('click', function () {
+      const url = location.href.split('#')[0];
+      navigator.clipboard.writeText(url).then(function () { toast('คัดลอกลิงก์แล้ว'); }, function () { prompt('คัดลอกลิงก์นี้', url); });
+    });
+    $('#switchCamBtn').addEventListener('click', function () {
+      if (!cameras || cameras.length < 2) return;
+      camIndex = (camIndex + 1) % cameras.length;
+      stopScanner();
+      startScanner();
+    });
 
     function pauseScanner() {
       if (scannerState === 'running') {
@@ -259,12 +348,11 @@
     }
 
     function resumeScanner() {
-      if (view !== 'scan') return;
+      if (view !== 'scan' || document.hidden) return;
       if (scannerState === 'paused') {
-        try { scanner.resume(); scannerState = 'running'; } catch (e) { scannerState = 'off'; startScanner(); }
-      } else if (scannerState === 'off') {
-        startScanner();
+        try { scanner.resume(); scannerState = 'running'; return; } catch (e) { stopScanner(); }
       }
+      startScanner();
     }
 
     function onScan(text) {
@@ -281,7 +369,7 @@
       pauseScanner();
       const ov = openSheet(
         '<div class="sheet-head plain">พิมพ์รหัสจาก QR</div>' +
-        '<form class="sheet-body" id="codeForm"><div class="field"><input type="text" id="codeInput" placeholder="เช่น PE7KX3M9QA2B" autocomplete="off" style="text-transform:uppercase"></div>' +
+        '<form class="sheet-body" id="codeForm"><div class="field"><input type="text" id="codeInput" placeholder="รหัส 5 ตัวบนการ์ด เช่น K7M2X" maxlength="20" autocomplete="off" style="text-transform:uppercase"></div>' +
         '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary">ค้นหา</button></div></form>',
         resumeScanner
       );
@@ -325,7 +413,7 @@
         foot = '<button class="btn btn-primary btn-xl btn-block" data-close>' + (view === 'scan' ? 'สแกนคนต่อไป' : 'ปิด') + '</button>';
       } else {
         head = '<div class="sheet-head bad">ไม่พบข้อมูล<small>รหัส ' + esc(code || '-') + '</small></div>';
-        body = '<p>ไม่พบรหัสนี้ในระบบ ลองค้นหาด้วยเบอร์โทรหรือชื่อ หรือลงทะเบียนแทน</p>';
+        body = '<p>ไม่พบรหัสนี้ในระบบ ลองพิมพ์รหัส 5 ตัวบนการ์ด ค้นหาด้วยเบอร์โทรหรือชื่อ หรือลงทะเบียนแทน</p>';
         foot = '<button class="btn btn-primary btn-block" id="goSearch">ค้นหาด้วยเบอร์ / ชื่อ</button>' +
                '<button class="btn btn-ghost btn-block" data-close>' + (view === 'scan' ? 'สแกนต่อ' : 'ปิด') + '</button>';
       }
@@ -351,7 +439,10 @@
       if (!res.ok) { btn.disabled = false; btn.textContent = 'ยืนยันเช็คอิน'; toast(res.error, true); return; }
       const ov = $('#sheetOverlay');
       if (ov) ov._onClose = null;
-      showResult(res.result, res.person || p, p.reg_id);
+      // เน็ตสะดุดแล้วระบบส่งซ้ำ: ครั้งแรกบันทึกสำเร็จไปแล้วโดยจุดนี้เอง ถือว่าเช็คอินสำเร็จ
+      let result = res.result;
+      if (result === 'duplicate' && res._retried && res.person && res.person.checked_in_by === sess.station) result = 'ok';
+      showResult(result, res.person || p, p.reg_id);
       if (res.result === 'ok' && navigator.vibrate) navigator.vibrate([60, 60, 60]);
     }
 
@@ -425,6 +516,9 @@
       if (document.hidden) stopScanner();
       else if (sess && view === 'scan' && !$('#sheetOverlay')) startScanner();
     });
+
+    // เริ่มหน้าจอหลังประกาศตัวแปรทั้งหมดแล้ว (ถ้าเรียกก่อน ตัวควบคุมกล้องยังไม่พร้อม กล้องจะไม่เปิด)
+    if (sess) enterApp(); else $('#loginView').hidden = false;
   </script>
 </body>
 </html>

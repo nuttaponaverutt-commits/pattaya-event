@@ -127,6 +127,16 @@ function selfTest() {
       r = call({ action: 'draw_void', token: adminTok, reg_id: winId });
       check('draw_void สละสิทธิ์', r.ok, r);
     }
+    // รหัสสำรอง 5 ตัว
+    const code1 = readRegs_().byId[id1].short_code;
+    check('มีรหัสสำรอง 5 ตัว', /^[A-HJKMNP-Z2-9]{5}$/.test(code1), code1);
+    r = call({ action: 'scan', token: staffTok, reg_id: code1.toLowerCase(), device: 'selfTest' });
+    check('สแกนด้วยรหัส 5 ตัว (พิมพ์ตัวเล็กก็ได้)', r.ok && r.person && r.person.reg_id === id1, r);
+    r = call({ action: 'search', token: staffTok, q: code1 });
+    check('ค้นหาด้วยรหัส 5 ตัว', r.ok && r.results.some(function (p) { return p.reg_id === id1; }), r);
+    r = call({ action: 'lookup', phone: '0000000001' });
+    check('ดู QR อีกครั้งได้รหัส 5 ตัวด้วย', r.ok && r.short_code === code1, r);
+
     r = call({ action: 'draw', token: staffTok, tier: 'VVIP', round: 'selfTest' });
     check('staff สุ่มรางวัลไม่ได้', !r.ok && r.auth === false, r);
 

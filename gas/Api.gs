@@ -44,6 +44,7 @@ function doPost(e) {
   } catch (err) {
     if (!err.userMessage) console.error(err && err.stack || err);
     res = { ok: false, error: err.userMessage || 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่' };
+    if (err.busy) res.busy = true; // หน้าเว็บจะส่งใหม่เอง
   }
   return json_(res);
 }
@@ -64,28 +65,40 @@ function handle_(req) {
 
 // ---------- Public ----------
 
+// ทุกคนที่เปิดหน้าลงทะเบียนเรียกตัวนี้ จึงเก็บผลไว้ 20 วินาที ลดภาระตอนลิงก์ถูกแชร์ในกลุ่ม LINE
 function apiConfig_(req) {
+  const s0 = getSettingsCached_();
+  const tier = tierFromCode_(s0, req && req.inv);
+  const hit = cacheGet_('cfg_' + tier);
+  if (hit) return JSON.parse(hit);
   const s = getSettings_();
   const count = countRegistrations_();
   const state = onlineState_(s, count);
-  return {
+  const out = {
     ok: true,
     event_name: String(s.event_name || ''),
     event_date: s.event_date instanceof Date ? fmt_(s.event_date, 'yyyy-MM-dd') : String(s.event_date || ''),
     event_time: String(s.event_time || ''),
     event_venue: String(s.event_venue || ''),
-    tier: tierFromCode_(s, req && req.inv),
+    tier: tier,
     registration_open: state.open,
     closed_reason: state.reason
   };
+  cachePut_('cfg_' + tier, JSON.stringify(out), 20);
+  if (CACHE_ERR) out.cache_error = CACHE_ERR;
+  return out;
 }
 
 function apiRegister_(req) {
   const f = validateForm_(req);
   const source = req.src === 'walkin' ? 'Walk-in' : 'Online';
-  const tier = tierFromCode_(getSettings_(), req.inv);
-  const r = withLock_(function () { return createRegistration_(f, source, tier); });
-  return { ok: true, existing: r.existing, reg_id: r.rec.reg_id, full_name: r.rec.full_name, tier: r.rec.tier };
+  const pre = prepareRegistration_(f);
+  const tier = tierFromCode_(pre.s, req.inv);
+  const r = withLock_(function () { return createRegistration_(f, source, tier, pre); });
+  return {
+    ok: true, existing: r.existing, reg_id: r.rec.reg_id, short_code: r.rec.short_code,
+    full_name: r.rec.full_name, tier: r.rec.tier
+  };
 }
 
 function apiLookup_(req) {
@@ -94,7 +107,7 @@ function apiLookup_(req) {
   const t = readRegs_();
   const hit = t.records.find(function (r) { return phoneKey_(r.phone) === key; });
   if (!hit) return { ok: false, error: 'ไม่พบการลงทะเบียนของเบอร์นี้' };
-  return { ok: true, reg_id: hit.reg_id, full_name: hit.full_name, tier: hit.tier };
+  return { ok: true, reg_id: hit.reg_id, short_code: hit.short_code, full_name: hit.full_name, tier: hit.tier };
 }
 
 function apiLogin_(req) {
@@ -122,9 +135,10 @@ function apiLogout_(req) {
 
 // ดูข้อมูลจาก QR ก่อนกด Confirm (ยังไม่เช็คอิน)
 function apiScan_(req, sess) {
-  const id = normId_(req.reg_id);
+  let id = normId_(req.reg_id);
   const t = readRegs_();
-  const rec = t.byId[id];
+  const rec = findRec_(t, id);
+  if (rec) id = rec.reg_id;
   if (!rec) {
     logCheckin_(id, '', 'not_found', sess, req.device);
     return { ok: true, result: 'not_found', reg_id: id };
@@ -150,6 +164,7 @@ function apiSearch_(req) {
     if (digits.length >= 4 && String(r.phone).indexOf(digits) !== -1) return true;
     if (String(r.full_name).toLowerCase().indexOf(q) !== -1) return true;
     if (String(r.company).toLowerCase().indexOf(q) !== -1) return true;
+    if (q.toUpperCase() === String(r.short_code)) return true;
     return qMmid && mmidKey_(r.mmid) === qMmid;
   }).slice(0, 20).map(pub_);
   return { ok: true, results: results };
@@ -159,8 +174,9 @@ function apiSearch_(req) {
 function apiStaffRegister_(req, sess) {
   const f = validateForm_(req);
   const tier = TIERS.indexOf(req.tier) !== -1 ? req.tier : 'Walk-in';
+  const pre = prepareRegistration_(f);
   return withLock_(function () {
-    const r = createRegistration_(f, 'Staff', tier);
+    const r = createRegistration_(f, 'Staff', tier, pre);
     const c = checkinById_(r.rec.reg_id, sess, req.device);
     c.existing = r.existing;
     return c;
@@ -396,7 +412,14 @@ function tierFromCode_(s, code) {
 
 // ---------- Core ----------
 
-function createRegistration_(f, source, tier) {
+// งานที่ไม่ต้องล็อก (อ่าน Settings และรายชื่อ Sales) ทำก่อนเข้าคิว ให้แต่ละคนถือล็อกสั้นที่สุด
+function prepareRegistration_(f) {
+  const s = getSettings_();
+  return { s: s, match: matchSales_(salesIndex_(s), f.mmid, f.phone) };
+}
+
+function createRegistration_(f, source, tier, pre) {
+  pre = pre || prepareRegistration_(f);
   const t = readRegs_();
   const dup = findDuplicate_(t, f.phone, f.mmid, null);
   if (dup) {
@@ -409,14 +432,14 @@ function createRegistration_(f, source, tier) {
     return { existing: true, rec: dup };
   }
 
-  const s = getSettings_();
   if (source !== 'Staff') {
-    const state = onlineState_(s, t.records.length);
+    const state = onlineState_(pre.s, t.records.length);
     if (!state.open) fail_(state.reason);
   }
-  const m = matchSales_(salesIndex_(s), f.mmid, f.phone);
+  const m = pre.match;
   const rec = {
     reg_id: newRegId_(t),
+    short_code: t.col.short_code !== undefined ? newShortCode_(t) : '',
     created_at: new Date(),
     source: source,
     full_name: f.full_name,
@@ -439,7 +462,8 @@ function createRegistration_(f, source, tier) {
 
 function checkinById_(id, sess, device) {
   const t = readRegs_();
-  const rec = t.byId[id];
+  const rec = findRec_(t, id);
+  if (rec) id = rec.reg_id;
   if (!rec) {
     logCheckin_(id, '', 'not_found', sess, device);
     return { ok: true, result: 'not_found', reg_id: id };
@@ -541,16 +565,24 @@ function readRegs_() {
   h.forEach(function (name, i) { col[name] = i; });
   const records = [];
   const byId = {};
+  const byCode = {};
   v.forEach(function (row, i) {
     if (!row[col.reg_id]) return;
     const rec = { _row: i + 2 };
     h.forEach(function (name, j) { rec[name] = row[j]; });
     rec.phone = String(rec.phone);
     rec.mmid = String(rec.mmid);
+    rec.short_code = String(rec.short_code || '');
     records.push(rec);
     byId[rec.reg_id] = rec;
+    if (rec.short_code) byCode[rec.short_code] = rec;
   });
-  return { sh: sh, h: h, col: col, records: records, byId: byId };
+  return { sh: sh, h: h, col: col, records: records, byId: byId, byCode: byCode };
+}
+
+// หาได้ทั้งจากรหัสใน QR และรหัสสำรอง 5 ตัว
+function findRec_(t, id) {
+  return t.byId[id] || t.byCode[id] || null;
 }
 
 function countRegistrations_() {
@@ -562,10 +594,13 @@ function appendRecord_(t, rec) {
   const range = t.sh.getRange(row, 1, 1, t.h.length);
   t.sh.getRange(row, t.col.phone + 1).setNumberFormat('@');
   t.sh.getRange(row, t.col.mmid + 1).setNumberFormat('@');
+  // รหัสอย่าง 2E345 จะถูกแปลงเป็นตัวเลขถ้าไม่ตั้งเป็น text
+  if (t.col.short_code !== undefined) t.sh.getRange(row, t.col.short_code + 1).setNumberFormat('@');
   range.setValues([t.h.map(function (name) { return safe_(rec[name]); })]);
   rec._row = row;
   t.records.push(rec);
   t.byId[rec.reg_id] = rec;
+  if (rec.short_code) t.byCode[rec.short_code] = rec;
 }
 
 function writeFields_(t, rec, upd) {
@@ -588,9 +623,32 @@ function getSettings_() {
   return s;
 }
 
+// Settings แบบเก็บไว้ 30 วินาที ใช้กับงานที่ไม่ต้องการค่าล่าสุดทันที
+function getSettingsCached_() {
+  const hit = cacheGet_('settings');
+  if (hit) return JSON.parse(hit);
+  const s = getSettings_();
+  cachePut_('settings', JSON.stringify(s), 30);
+  return s;
+}
+
+// cache เป็นตัวเสริมความเร็ว ถ้าใช้ไม่ได้ให้ทำงานต่อโดยอ่านจาก Sheet ตรงๆ
+let CACHE_ERR = '';
+function cacheGet_(key) {
+  try { return CacheService.getScriptCache().get(key); } catch (e) { CACHE_ERR = String(e).slice(0, 120); return null; }
+}
+function cachePut_(key, value, ttl) {
+  try { CacheService.getScriptCache().put(key, value, ttl); } catch (e) { CACHE_ERR = String(e).slice(0, 120); }
+}
+
 function withLock_(fn) {
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(20000)) fail_('ระบบกำลังยุ่ง กรุณาลองใหม่อีกครั้ง');
+  if (!lock.tryLock(20000)) {
+    const e = new Error('busy');
+    e.userMessage = 'ระบบกำลังยุ่ง กรุณาลองใหม่อีกครั้ง';
+    e.busy = true;
+    throw e;
+  }
   try {
     return fn();
   } finally {
@@ -646,6 +704,18 @@ function newRegId_(t) {
   return id;
 }
 
+// รหัสสำรอง 5 ตัว ให้ Staff พิมพ์แทนเมื่อสแกนไม่ได้ (ตัด 0/O/1/I/L ที่สับสนง่าย, ประมาณ 28 ล้านแบบ)
+function newShortCode_(t) {
+  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let c;
+  do {
+    const b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid());
+    c = '';
+    for (let i = 0; i < 5; i++) c += A[(b[i] + 256) % A.length];
+  } while (t.byCode[c] || t.byId[c]);
+  return c;
+}
+
 function normId_(v) {
   return String(v || '').trim().toUpperCase().slice(0, 40);
 }
@@ -689,6 +759,7 @@ function fmt_(d, pattern) {
 function pub_(r) {
   return {
     reg_id: r.reg_id,
+    short_code: r.short_code || '',
     full_name: r.full_name,
     phone: r.phone,
     mmid: r.mmid,

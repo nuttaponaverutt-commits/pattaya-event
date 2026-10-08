@@ -2,7 +2,7 @@ const SHEETS = {
   Registrations: [
     'reg_id', 'created_at', 'source', 'full_name', 'phone', 'mmid', 'company',
     'age_20_confirmed', 'pdpa_consent', 'sales_name', 'match_method', 'status',
-    'checked_in_at', 'checked_in_by', 'note', 'tier'
+    'checked_in_at', 'checked_in_by', 'note', 'tier', 'short_code'
   ],
   Sales_List: [],
   Checkin_Log: ['timestamp', 'reg_id', 'full_name', 'result', 'scanned_by', 'device'],
@@ -56,14 +56,22 @@ function setup() {
   // phone และ mmid เป็น text เพื่อไม่ให้เลข 0 นำหน้าหาย
   const reg = ss.getSheetByName('Registrations');
   const regHead = reg.getRange(1, 1, 1, reg.getLastColumn()).getValues()[0].map(String);
-  ['phone', 'mmid'].forEach(function (col) {
+  ['phone', 'mmid', 'short_code'].forEach(function (col) {
     reg.getRange(1, regHead.indexOf(col) + 1, reg.getMaxRows(), 1).setNumberFormat('@');
   });
-  // แถวเก่าที่ยังไม่มีกลุ่ม ให้เป็น Walk-in
-  const tierCol = regHead.indexOf('tier') + 1;
   if (reg.getLastRow() > 1) {
-    const r = reg.getRange(2, tierCol, reg.getLastRow() - 1, 1);
-    r.setValues(r.getValues().map(function (v) { return [v[0] || 'Walk-in']; }));
+    // แถวเก่าที่ยังไม่มีกลุ่ม ให้เป็น Walk-in
+    const tierRange = reg.getRange(2, regHead.indexOf('tier') + 1, reg.getLastRow() - 1, 1);
+    tierRange.setValues(tierRange.getValues().map(function (v) { return [v[0] || 'Walk-in']; }));
+    // แถวเก่าที่ยังไม่มีรหัสสำรอง 5 ตัว
+    const t = readRegs_();
+    const codeRange = reg.getRange(2, regHead.indexOf('short_code') + 1, reg.getLastRow() - 1, 1);
+    codeRange.setValues(codeRange.getValues().map(function (v) {
+      if (v[0]) return [v[0]];
+      const c = newShortCode_(t);
+      t.byCode[c] = true;
+      return [c];
+    }));
   }
 
   const settings = ss.getSheetByName('Settings');

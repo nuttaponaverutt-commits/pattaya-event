@@ -42,7 +42,9 @@ function toast(msg, isErr) {
 
 // เปิด popup แบบ sheet; คืน element ของ overlay (เรียก closeSheet() เพื่อปิด)
 function openSheet(html, onClose) {
-  closeSheet();
+  // เปลี่ยนแผ่นเดิมเป็นแผ่นใหม่ ไม่นับเป็นการปิด (ไม่งั้นกล้องจะสแกนต่อทั้งที่ผลยังแสดงอยู่)
+  const old = $('#sheetOverlay');
+  if (old) old.remove();
   const ov = document.createElement('div');
   ov.className = 'overlay';
   ov.id = 'sheetOverlay';
@@ -74,7 +76,7 @@ function personDetails(p) {
     '<dt>ร้าน/บริษัท</dt><dd>' + esc(p.company || '-') + '</dd>' +
     '<dt>เบอร์โทร</dt><dd>' + esc(p.phone || '-') + '</dd>' +
     '<dt>Sales</dt><dd>' + esc(p.sales_name || 'ไม่มี Sales') + '</dd>' +
-    '<dt>รหัส</dt><dd>' + esc(p.reg_id) + '</dd>' +
+    '<dt>รหัส</dt><dd>' + esc(p.short_code || p.reg_id) + '</dd>' +
     '</dl>';
 }
 

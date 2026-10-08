@@ -456,7 +456,7 @@
         if (sales === '__none' && r.sales_name) return false;
         if (sales && sales !== '__none' && r.sales_name !== sales) return false;
         if (q) {
-          const hay = [r.full_name, r.phone, r.mmid, r.company, r.reg_id, r.sales_name].join(' ').toLowerCase();
+          const hay = [r.full_name, r.phone, r.mmid, r.company, r.reg_id, r.short_code, r.sales_name].join(' ').toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
         return true;
@@ -468,7 +468,7 @@
       $('#countLine').textContent = 'แสดง ' + rows.length + ' จาก ' + records.length + ' รายการ';
       $('#regBody').innerHTML = rows.length ? rows.map(function (r) {
         return '<tr data-id="' + esc(r.reg_id) + '">' +
-          '<td class="c-name">' + esc(r.full_name) + '<div class="muted">' + esc(r.reg_id) + '</div></td>' +
+          '<td class="c-name">' + esc(r.full_name) + '<div class="muted">รหัส ' + esc(r.short_code || r.reg_id) + '</div></td>' +
           '<td>' + tierPill(r.tier) + '</td>' +
           '<td data-l="เบอร์">' + esc(r.phone) + '</td>' +
           '<td data-l="MMID">' + esc(r.mmid || '-') + '</td>' +
@@ -523,7 +523,7 @@
       const ov = openSheet('<div class="sheet-head plain">QR ของ ' + esc(r.full_name) + '</div><div class="sheet-body result" id="qrHost"></div>' +
         '<div class="sheet-foot"><button class="btn btn-ghost btn-block" data-close>ปิด</button></div>');
       $('[data-close]', ov).addEventListener('click', closeSheet);
-      await showQrCard($('#qrHost', ov), Object.assign({}, eventInfo, { reg_id: r.reg_id, full_name: r.full_name }));
+      await showQrCard($('#qrHost', ov), Object.assign({}, eventInfo, { reg_id: r.reg_id, short_code: r.short_code, full_name: r.full_name, tier: r.tier }));
     }
 
     function editRecord(r) {
@@ -606,7 +606,7 @@
     $('#exportBtn').addEventListener('click', function () {
       const rows = filtered();
       const cols = [
-        ['reg_id', 'reg_id'], ['created_at', 'created_at'], ['tier', 'tier'], ['source', 'source'], ['full_name', 'full_name'],
+        ['reg_id', 'reg_id'], ['short_code', 'short_code'], ['created_at', 'created_at'], ['tier', 'tier'], ['source', 'source'], ['full_name', 'full_name'],
         ['phone', 'phone'], ['mmid', 'mmid'], ['company', 'company'], ['sales_name', 'sales_name'],
         ['match_method', 'match_method'], ['status', 'status'], ['checked_in_at_full', 'checked_in_at'],
         ['checked_in_by', 'checked_in_by'], ['note', 'note']
@@ -618,7 +618,7 @@
         return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
       };
       const lines = [cols.map(function (c) { return c[1]; }).join(',')].concat(rows.map(function (r) {
-        return cols.map(function (c) { return cell(r[c[0]], c[0] === 'phone' || c[0] === 'mmid'); }).join(',');
+        return cols.map(function (c) { return cell(r[c[0]], c[0] === 'phone' || c[0] === 'mmid' || c[0] === 'short_code'); }).join(',');
       }));
       const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
       const a = document.createElement('a');
