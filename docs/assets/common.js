@@ -49,34 +49,46 @@ async function drawQrCard(info) {
   const g = c.getContext('2d');
   const font = '"IBM Plex Sans Thai", sans-serif';
 
+  const display = '"Playfair Display", ' + font;
+  const tier = info.tier || 'Walk-in';
+  const tierColors = { 'VVIP': ['#b48d3e', '#151412'], 'VIP': ['#151412', '#e4cf9c'], 'Walk-in': ['#e7e2d6', '#3a372f'] }[tier] || ['#e7e2d6', '#3a372f'];
+
   g.fillStyle = '#ffffff';
   g.fillRect(0, 0, CARD_W, CARD_H);
-  g.fillStyle = '#0f1f3d';
-  g.fillRect(0, 0, CARD_W, 150);
-  g.fillStyle = '#b8955a';
-  g.fillRect(0, 150, CARD_W, 6);
+  g.fillStyle = '#151412';
+  g.fillRect(0, 0, CARD_W, 170);
+  g.fillStyle = '#b48d3e';
+  g.fillRect(0, 170, CARD_W, 5);
 
   g.textAlign = 'center';
-  g.fillStyle = '#ffffff';
-  g.font = '600 38px ' + font;
-  g.fillText(fitText(g, info.event_name || 'Pattaya Event', CARD_W - 80), CARD_W / 2, 72);
-  g.font = '400 24px ' + font;
-  g.fillStyle = '#d9c7a3';
-  g.fillText([thaiDate(info.event_date), info.event_venue].filter(Boolean).join('  |  '), CARD_W / 2, 116);
+  g.fillStyle = '#f4ecd8';
+  g.font = '600 40px ' + display;
+  g.fillText(fitText(g, info.event_name || 'Wine & Spirits Discovery 2026', CARD_W - 80), CARD_W / 2, 70);
+  g.font = '400 23px ' + font;
+  g.fillStyle = '#e4cf9c';
+  g.fillText(fitText(g, [thaiDate(info.event_date), info.event_time].filter(Boolean).join('  •  '), CARD_W - 80), CARD_W / 2, 112);
+  g.fillText(fitText(g, info.event_venue || '', CARD_W - 80), CARD_W / 2, 146);
 
-  g.fillStyle = '#1c1c1c';
+  g.fillStyle = '#1c1b18';
   g.font = '600 40px ' + font;
-  g.fillText(fitText(g, info.full_name || '', CARD_W - 80), CARD_W / 2, 230);
+  g.fillText(fitText(g, info.full_name || '', CARD_W - 80), CARD_W / 2, 238);
+
+  // แถบกลุ่มลูกค้า
+  g.font = '600 24px ' + font;
+  const tw = g.measureText(tier).width + 48;
+  roundRect(g, (CARD_W - tw) / 2, 256, tw, 40, 20, tierColors[0]);
+  g.fillStyle = tierColors[1];
+  g.fillText(tier, CARD_W / 2, 284);
 
   const qr = qrcode(0, 'M');
   qr.addData(info.reg_id);
   qr.make();
   const n = qr.getModuleCount();
-  const size = 460;
+  const size = 440;
   const cell = Math.floor(size / (n + 8));
   const qrPx = cell * (n + 8);
   const x0 = (CARD_W - qrPx) / 2;
-  const y0 = 270;
+  const y0 = 310;
   g.fillStyle = '#ffffff';
   g.fillRect(x0, y0, qrPx, qrPx);
   g.fillStyle = '#000000';
@@ -86,11 +98,11 @@ async function drawQrCard(info) {
     }
   }
 
-  g.fillStyle = '#1c1c1c';
+  g.fillStyle = '#1c1b18';
   g.font = '600 34px "IBM Plex Mono", monospace';
-  g.fillText(info.reg_id, CARD_W / 2, y0 + qrPx + 50);
+  g.fillText(info.reg_id, CARD_W / 2, y0 + qrPx + 46);
 
-  g.strokeStyle = '#ddd6c8';
+  g.strokeStyle = '#ddd5c4';
   g.lineWidth = 2;
   g.beginPath();
   g.moveTo(60, 860);
@@ -102,6 +114,18 @@ async function drawQrCard(info) {
   g.fillText('สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น', CARD_W / 2, 948);
 
   return c.toDataURL('image/png');
+}
+
+function roundRect(g, x, y, w, h, r, fill) {
+  g.fillStyle = fill;
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+  g.fill();
 }
 
 function fitText(g, text, maxW) {
@@ -135,7 +159,7 @@ async function showQrCard(host, info) {
 }
 
 function saveMyReg(info) {
-  try { localStorage.setItem('pe_reg', JSON.stringify({ reg_id: info.reg_id, full_name: info.full_name })); } catch (e) {}
+  try { localStorage.setItem('pe_reg', JSON.stringify({ reg_id: info.reg_id, full_name: info.full_name, tier: info.tier })); } catch (e) {}
 }
 
 function loadMyReg() {

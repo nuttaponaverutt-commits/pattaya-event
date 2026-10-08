@@ -60,8 +60,15 @@ function closeSheet() {
   if (ov._onClose) ov._onClose();
 }
 
+function tierPill(tier) {
+  const t = tier || 'Walk-in';
+  return '<span class="tier-pill tier-' + esc(t) + '">' + esc(t) + '</span>';
+}
+
 function personDetails(p) {
-  return '<p class="person-name">' + esc(p.full_name) + '</p>' +
+  const t = p.tier || 'Walk-in';
+  return '<div class="wristband tier-' + esc(t) + '"><small>Wristband</small>' + esc(t) + '</div>' +
+    '<p class="person-name">' + esc(p.full_name) + '</p>' +
     '<dl class="kv">' +
     '<dt>MMID</dt><dd>' + esc(p.mmid || '-') + '</dd>' +
     '<dt>ร้าน/บริษัท</dt><dd>' + esc(p.company || '-') + '</dd>' +

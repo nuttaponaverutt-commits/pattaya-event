@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lucky Draw</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0b0a; --panel: #171612; --line: #2e2b24; --gold: #c9a24c; --gold-soft: #e9d6a6; --cream: #f4ecd8; --muted: #9a927f; --bad: #e07a7a;
+      --display: "Playfair Display", "IBM Plex Sans Thai", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--cream); font-family: "IBM Plex Sans Thai", system-ui, sans-serif; }
+    [hidden] { display: none !important; }
+    .app { min-height: 100%; display: grid; grid-template-columns: 1fr 320px; }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } }
+
+    .stage {
+      position: relative; display: grid; grid-template-rows: auto 1fr auto; padding: 32px 40px; min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 45%, rgba(201,162,76,.14) 0%, transparent 60%), var(--bg);
+    }
+    .brand { text-align: center; }
+    .brand .ev { font-family: var(--display); font-style: italic; color: var(--gold); font-size: 22px; }
+    .brand .round { font-family: var(--display); font-size: clamp(32px, 5vw, 56px); margin-top: 4px; letter-spacing: .02em; }
+    .brand .pool { color: var(--muted); font-size: 15px; margin-top: 4px; }
+
+    .center { display: grid; place-content: center; text-align: center; gap: 18px; padding: 24px 0; }
+    .name { font-size: clamp(40px, 7vw, 96px); font-weight: 600; line-height: 1.15; min-height: 1.2em; color: var(--cream); text-wrap: balance; }
+    .name.spin { color: var(--muted); }
+    .name.win { color: var(--gold-soft); text-shadow: 0 0 40px rgba(201,162,76,.45); animation: pop .5s ease-out; }
+    @keyframes pop { from { transform: scale(.92); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .name.win { animation: none; } }
+    .sub { font-size: clamp(18px, 2.4vw, 28px); color: var(--gold-soft); min-height: 1.4em; }
+    .tier { display: inline-block; padding: 6px 22px; border-radius: 999px; font-weight: 600; letter-spacing: .1em; font-size: 20px; }
+    .tier-VVIP { background: var(--gold); color: #151412; }
+    .tier-VIP { background: #151412; color: var(--gold-soft); border: 1px solid var(--gold); }
+    .tier-Walk-in { background: #e7e2d6; color: #3a372f; }
+    .idle { color: var(--muted); font-size: 20px; }
+
+    .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center; }
+    select, input { font: inherit; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--cream); }
+    button { font: inherit; cursor: pointer; border-radius: 8px; padding: 12px 20px; border: 1px solid var(--line); background: var(--panel); color: var(--cream); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .go { background: var(--gold); color: #151412; border-color: var(--gold); font-weight: 600; font-size: 20px; padding: 14px 36px; }
+    .go[disabled] { opacity: .5; cursor: wait; }
+    .void { border-color: var(--bad); color: var(--bad); }
+    .stage.presenting .controls { opacity: .15; transition: opacity .3s; }
+    .stage.presenting .controls:hover { opacity: 1; }
+
+    aside { background: var(--panel); border-left: 1px solid var(--line); padding: 24px 20px; overflow: auto; max-height: 100vh; }
+    @media (max-width: 900px) { aside { border-left: 0; border-top: 1px solid var(--line); max-height: none; } }
+    aside h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0 0 14px; color: var(--gold-soft); }
+    .w { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; display: grid; gap: 2px; }
+    .w b { font-size: 16px; }
+    .w .m { color: var(--muted); }
+    .w.void b { text-decoration: line-through; color: var(--muted); }
+    .login { max-width: 420px; margin: 20vh auto; text-align: center; padding: 0 16px; }
+    .login a { color: var(--gold); }
+    .err { color: var(--bad); min-height: 1.4em; }
+  </style>
+</head>
+<body>
+  <div class="login" id="needLogin" hidden>
+    <p>กรุณาเข้าสู่ระบบหลังบ้านก่อน</p>
+    <p><a href="./">ไปหน้าเข้าสู่ระบบ Admin</a> แล้วกลับมาที่หน้านี้</p>
+  </div>
+
+  <div class="app" id="app" hidden>
+    <main class="stage" id="stage">
+      <div class="brand">
+        <div class="ev" id="evName">Wine &amp; Spirits Discovery 2026</div>
+        <div class="round" id="roundTitle">Lucky Draw #1</div>
+        <div class="pool" id="poolText"></div>
+      </div>
+
+      <div class="center" aria-live="polite">
+        <div class="name idle" id="nameBox">พร้อมสุ่มรางวัล</div>
+        <div class="sub" id="subBox"></div>
+        <div id="tierBox"></div>
+      </div>
+
+      <div>
+        <div class="err" id="errBox"></div>
+        <div class="controls">
+          <select id="tier" aria-label="กลุ่มที่สุ่ม">
+            <option value="">ทุกกลุ่ม</option>
+            <option>VVIP</option>
+            <option>VIP</option>
+            <option>Walk-in</option>
+          </select>
+          <input id="round" value="Lucky Draw #1" maxlength="40" aria-label="ชื่อรอบ">
+          <button class="go" id="goBtn">สุ่มรางวัล</button>
+          <button class="void" id="voidBtn" hidden>ไม่อยู่ในงาน / สุ่มใหม่</button>
+          <button id="fsBtn">เต็มจอ</button>
+          <a href="./" style="color:var(--muted);font-size:14px">กลับหลังบ้าน</a>
+        </div>
+      </div>
+    </main>
+
+    <aside>
+      <h2>ผู้โชคดี</h2>
+      <div id="winners"><div class="w m">ยังไม่มี</div></div>
+    </aside>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    const sess = loadSession('pe_admin');
+    let lastWinner = null;
+    let busy = false;
+
+    if (!sess) {
+      $('#needLogin').hidden = false;
+    } else {
+      $('#app').hidden = false;
+      api('config').then(function (c) { if (c.ok && c.event_name) $('#evName').textContent = c.event_name; });
+      loadWinners();
+    }
+
+    async function authed(action, data) {
+      const res = await api(action, Object.assign({ token: sess.token }, data));
+      if (res.auth === false) { $('#app').hidden = true; $('#needLogin').hidden = false; }
+      return res;
+    }
+
+    $('#round').addEventListener('input', function () { $('#roundTitle').textContent = this.value || 'Lucky Draw'; });
+    $('#fsBtn').addEventListener('click', function () {
+      if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+      else document.documentElement.requestFullscreen().catch(function () {});
+    });
+
+    $('#goBtn').addEventListener('click', function () { draw(); });
+    $('#voidBtn').addEventListener('click', async function () {
+      if (!lastWinner || busy) return;
+      const res = await authed('draw_void', { reg_id: lastWinner.reg_id });
+      if (!res.ok) { $('#errBox').textContent = res.error; return; }
+      loadWinners();
+      draw();
+    });
+
+    async function draw() {
+      if (busy) return;
+      busy = true;
+      $('#errBox').textContent = '';
+      $('#goBtn').disabled = true;
+      $('#voidBtn').hidden = true;
+      $('#stage').classList.add('presenting');
+      const nameBox = $('#nameBox');
+      nameBox.className = 'name spin';
+      nameBox.textContent = 'กำลังสุ่ม...';
+      $('#subBox').textContent = '';
+      $('#tierBox').innerHTML = '';
+
+      const res = await authed('draw', { tier: $('#tier').value, round: $('#round').value });
+      if (!res.ok) {
+        nameBox.className = 'name idle';
+        nameBox.textContent = 'พร้อมสุ่มรางวัล';
+        $('#errBox').textContent = res.error;
+        finish();
+        return;
+      }
+      $('#poolText').textContent = 'ผู้มีสิทธิ์ลุ้น ' + res.pool_size + ' คน';
+      await spin(res.names);
+      const w = res.winner;
+      lastWinner = w;
+      nameBox.className = 'name win';
+      nameBox.textContent = w.full_name;
+      $('#subBox').textContent = [w.company, w.phone_tail ? 'โทร xxx-xxx-' + w.phone_tail : ''].filter(Boolean).join('  ·  ');
+      $('#tierBox').innerHTML = '<span class="tier tier-' + esc(w.tier) + '">' + esc(w.tier) + '</span>';
+      $('#voidBtn').hidden = false;
+      loadWinners();
+      finish();
+    }
+
+    function finish() {
+      busy = false;
+      $('#goBtn').disabled = false;
+      $('#stage').classList.remove('presenting');
+    }
+
+    // หมุนรายชื่อ ช้าลงเรื่อยๆ ประมาณ 3 วินาที
+    function spin(names) {
+      return new Promise(function (resolve) {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce || !names || !names.length) { setTimeout(resolve, 600); return; }
+        const box = $('#nameBox');
+        let delay = 50, i = 0;
+        (function tick() {
+          box.textContent = names[i++ % names.length];
+          delay *= 1.12;
+          if (delay > 380) { resolve(); return; }
+          setTimeout(tick, delay);
+        })();
+      });
+    }
+
+    async function loadWinners() {
+      const res = await authed('draw_list', {});
+      if (!res.ok) return;
+      $('#winners').innerHTML = res.winners.length ? res.winners.map(function (w) {
+        return '<div class="w' + (w.status === 'void' ? ' void' : '') + '"><b>' + esc(w.full_name) + '</b>' +
+          '<span class="m">' + esc(w.round) + ' · ' + esc(w.tier) + ' · ' + esc(w.time) + (w.status === 'void' ? ' · สละสิทธิ์' : '') + '</span></div>';
+      }).join('') : '<div class="w m">ยังไม่มี</div>';
+    }
+  </script>
+</body>
+</html>

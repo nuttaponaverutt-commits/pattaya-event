@@ -5,6 +5,8 @@ const STATUS_PENDING = 'ยังไม่มา';
 const STATUS_IN = 'มาแล้ว';
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 const TZ = 'Asia/Bangkok';
+// กลุ่มลูกค้า เรียงจากสูงไปต่ำ (ใช้ตัดสินตอนลงทะเบียนซ้ำด้วยลิงก์กลุ่มที่สูงกว่า)
+const TIERS = ['VVIP', 'VIP', 'Walk-in'];
 
 const PUBLIC_ACTIONS = {
   config: apiConfig_,
@@ -27,7 +29,11 @@ const ADMIN_ACTIONS = {
   update: apiUpdate_,
   delete: apiDelete_,
   rematch: apiRematch_,
-  sales_names: apiSalesNames_
+  sales_names: apiSalesNames_,
+  links: apiLinks_,
+  draw: apiDraw_,
+  draw_list: apiDrawList_,
+  draw_void: apiDrawVoid_
 };
 
 function doPost(e) {
@@ -58,7 +64,7 @@ function handle_(req) {
 
 // ---------- Public ----------
 
-function apiConfig_() {
+function apiConfig_(req) {
   const s = getSettings_();
   const count = countRegistrations_();
   const state = onlineState_(s, count);
@@ -66,7 +72,9 @@ function apiConfig_() {
     ok: true,
     event_name: String(s.event_name || ''),
     event_date: s.event_date instanceof Date ? fmt_(s.event_date, 'yyyy-MM-dd') : String(s.event_date || ''),
+    event_time: String(s.event_time || ''),
     event_venue: String(s.event_venue || ''),
+    tier: tierFromCode_(s, req && req.inv),
     registration_open: state.open,
     closed_reason: state.reason
   };
@@ -75,8 +83,9 @@ function apiConfig_() {
 function apiRegister_(req) {
   const f = validateForm_(req);
   const source = req.src === 'walkin' ? 'Walk-in' : 'Online';
-  const r = withLock_(function () { return createRegistration_(f, source); });
-  return { ok: true, existing: r.existing, reg_id: r.rec.reg_id, full_name: r.rec.full_name };
+  const tier = tierFromCode_(getSettings_(), req.inv);
+  const r = withLock_(function () { return createRegistration_(f, source, tier); });
+  return { ok: true, existing: r.existing, reg_id: r.rec.reg_id, full_name: r.rec.full_name, tier: r.rec.tier };
 }
 
 function apiLookup_(req) {
@@ -85,7 +94,7 @@ function apiLookup_(req) {
   const t = readRegs_();
   const hit = t.records.find(function (r) { return phoneKey_(r.phone) === key; });
   if (!hit) return { ok: false, error: 'ไม่พบการลงทะเบียนของเบอร์นี้' };
-  return { ok: true, reg_id: hit.reg_id, full_name: hit.full_name };
+  return { ok: true, reg_id: hit.reg_id, full_name: hit.full_name, tier: hit.tier };
 }
 
 function apiLogin_(req) {
@@ -149,8 +158,9 @@ function apiSearch_(req) {
 // staff ลงทะเบียนแทนแล้วเช็คอินทันที (ไม่สนว่าปิดรับออนไลน์หรือเต็มแล้ว)
 function apiStaffRegister_(req, sess) {
   const f = validateForm_(req);
+  const tier = TIERS.indexOf(req.tier) !== -1 ? req.tier : 'Walk-in';
   return withLock_(function () {
-    const r = createRegistration_(f, 'Staff');
+    const r = createRegistration_(f, 'Staff', tier);
     const c = checkinById_(r.rec.reg_id, sess, req.device);
     c.existing = r.existing;
     return c;
@@ -166,6 +176,9 @@ function apiDashboard_() {
   const idx = salesIndex_(s);
 
   const bySource = { 'Online': 0, 'Walk-in': 0, 'Staff': 0 };
+  const targets = { 'VVIP': s.target_vvip, 'VIP': s.target_vip, 'Walk-in': s.target_walkin };
+  const byTier = {};
+  TIERS.forEach(function (t) { byTier[t] = { registered: 0, attended: 0, target: Number(targets[t]) || 0 }; });
   const salesMap = {};
   idx.names.forEach(function (n) { salesMap[n] = { sales_name: n, in_list: idx.counts[n], registered: 0, attended: 0 }; });
   const NONE = 'ไม่มี Sales';
@@ -175,6 +188,9 @@ function apiDashboard_() {
     if (bySource[r.source] !== undefined) bySource[r.source]++;
     const isIn = r.status === STATUS_IN;
     if (isIn) attended++;
+    const t = byTier[r.tier] || byTier['Walk-in'];
+    t.registered++;
+    if (isIn) t.attended++;
     const name = r.sales_name || NONE;
     if (!salesMap[name]) salesMap[name] = { sales_name: name, in_list: 0, registered: 0, attended: 0 };
     salesMap[name].registered++;
@@ -195,6 +211,7 @@ function apiDashboard_() {
     pending: total - attended,
     attend_pct: total ? Math.round(attended * 1000 / total) / 10 : 0,
     by_source: bySource,
+    by_tier: byTier,
     recent: recent,
     sales_summary: Object.keys(salesMap).map(function (k) { return salesMap[k]; })
       .sort(function (a, b) { return (a.sales_name === NONE) - (b.sales_name === NONE) || b.registered - a.registered; }),
@@ -226,9 +243,10 @@ function apiUpdate_(req, sess) {
       upd.phone = cleanPhone_(fields.phone);
       if (!/^0\d{9}$/.test(upd.phone)) fail_('เบอร์โทรต้องเป็นตัวเลข 10 หลัก');
     }
-    if ('mmid' in fields) {
-      upd.mmid = clip_(fields.mmid, 30);
-      if (!upd.mmid) fail_('MMID ห้ามว่าง');
+    if ('mmid' in fields) upd.mmid = clip_(fields.mmid, 30);
+    if ('tier' in fields) {
+      if (TIERS.indexOf(fields.tier) === -1) fail_('กลุ่มไม่ถูกต้อง');
+      upd.tier = fields.tier;
     }
     if ('company' in fields) upd.company = clip_(fields.company, 100);
     if ('note' in fields) upd.note = clip_(fields.note, 300);
@@ -249,7 +267,7 @@ function apiUpdate_(req, sess) {
     }
 
     if (upd.phone || upd.mmid) {
-      const dup = findDuplicate_(t, upd.phone || rec.phone, upd.mmid || rec.mmid, id);
+      const dup = findDuplicate_(t, upd.phone || rec.phone, 'mmid' in upd ? upd.mmid : rec.mmid, id);
       if (dup) fail_('เบอร์โทรหรือ MMID ซ้ำกับ ' + dup.full_name + ' (' + dup.reg_id + ')');
     }
 
@@ -299,12 +317,97 @@ function apiSalesNames_() {
   return { ok: true, names: salesIndex_(getSettings_()).names };
 }
 
+// รหัสลิงก์เชิญของแต่ละกลุ่ม ให้หน้า Admin สร้างลิงก์
+function apiLinks_() {
+  const s = getSettings_();
+  return { ok: true, vvip: String(s.invite_code_vvip || ''), vip: String(s.invite_code_vip || '') };
+}
+
+// ---------- Lucky Draw ----------
+
+// สุ่มจากผู้ที่เช็คอินแล้วและยังไม่เคยถูกสุ่ม (รวมคนที่สละสิทธิ์) สุ่มฝั่ง server
+function apiDraw_(req, sess) {
+  const tier = String(req.tier || '');
+  if (tier && TIERS.indexOf(tier) === -1) fail_('กลุ่มไม่ถูกต้อง');
+  const round = clip_(req.round, 40) || 'Lucky Draw';
+  return withLock_(function () {
+    const log = sheet_('Lucky_Draw');
+    if (!log) fail_('ยังไม่มีแท็บ Lucky_Draw กรุณารัน setup ใน Apps Script อีกครั้ง');
+    const drawn = {};
+    log.getDataRange().getValues().slice(1).forEach(function (r) { if (r[3]) drawn[r[3]] = true; });
+    const pool = readRegs_().records.filter(function (r) {
+      return r.status === STATUS_IN && !drawn[r.reg_id] && (!tier || (r.tier || 'Walk-in') === tier);
+    });
+    if (!pool.length) return { ok: false, error: 'ไม่มีผู้มีสิทธิ์ลุ้นในกลุ่มนี้แล้ว (ต้องเช็คอินแล้ว และยังไม่เคยถูกสุ่ม)' };
+    const w = pool[randomInt_(pool.length)];
+    log.appendRow([new Date(), safe_(round), w.tier || 'Walk-in', w.reg_id, safe_(w.full_name), 'won', safe_(sess.station)]);
+    const names = [];
+    for (let i = 0; i < Math.min(60, pool.length); i++) names.push(pool[randomInt_(pool.length)].full_name);
+    return { ok: true, winner: drawPub_(w), pool_size: pool.length, names: names };
+  });
+}
+
+function apiDrawList_() {
+  const log = sheet_('Lucky_Draw');
+  if (!log) return { ok: true, winners: [] };
+  const regs = readRegs_().byId;
+  const winners = log.getDataRange().getValues().slice(1).filter(function (r) { return r[3]; }).map(function (r) {
+    const rec = regs[r[3]];
+    return {
+      time: fmt_(r[0], 'HH:mm'), round: r[1], tier: r[2], reg_id: r[3], full_name: r[4], status: r[5],
+      company: rec ? rec.company : '', phone_tail: rec ? String(rec.phone).slice(-4) : ''
+    };
+  }).reverse();
+  return { ok: true, winners: winners };
+}
+
+// ผู้โชคดีไม่อยู่ในงาน: เปลี่ยนสถานะเป็นสละสิทธิ์ (ยังถูกตัดออกจากการสุ่มรอบต่อไป)
+function apiDrawVoid_(req) {
+  const id = normId_(req.reg_id);
+  return withLock_(function () {
+    const log = sheet_('Lucky_Draw');
+    const v = log.getDataRange().getValues();
+    for (let i = v.length - 1; i >= 1; i--) {
+      if (v[i][3] === id && v[i][5] === 'won') {
+        log.getRange(i + 1, 6).setValue('void');
+        return { ok: true };
+      }
+    }
+    return { ok: false, error: 'ไม่พบรายชื่อผู้โชคดีนี้' };
+  });
+}
+
+function drawPub_(r) {
+  return { reg_id: r.reg_id, full_name: r.full_name, company: r.company, tier: r.tier || 'Walk-in', phone_tail: String(r.phone).slice(-4) };
+}
+
+function randomInt_(n) {
+  const b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid());
+  const x = ((b[0] & 255) * 16777216) + ((b[1] & 255) << 16) + ((b[2] & 255) << 8) + (b[3] & 255);
+  return x % n;
+}
+
+function tierFromCode_(s, code) {
+  const c = String(code || '').trim().toLowerCase();
+  if (c && c === String(s.invite_code_vvip || '').toLowerCase()) return 'VVIP';
+  if (c && c === String(s.invite_code_vip || '').toLowerCase()) return 'VIP';
+  return 'Walk-in';
+}
+
 // ---------- Core ----------
 
-function createRegistration_(f, source) {
+function createRegistration_(f, source, tier) {
   const t = readRegs_();
   const dup = findDuplicate_(t, f.phone, f.mmid, null);
-  if (dup) return { existing: true, rec: dup };
+  if (dup) {
+    // ลงซ้ำด้วยลิงก์กลุ่มที่สูงกว่า ให้ยกระดับกลุ่ม ไม่ลดระดับ
+    const cur = TIERS.indexOf(dup.tier) === -1 ? TIERS.length - 1 : TIERS.indexOf(dup.tier);
+    if (TIERS.indexOf(tier) !== -1 && TIERS.indexOf(tier) < cur) {
+      writeFields_(t, dup, { tier: tier });
+      dup.tier = tier;
+    }
+    return { existing: true, rec: dup };
+  }
 
   const s = getSettings_();
   if (source !== 'Staff') {
@@ -327,7 +430,8 @@ function createRegistration_(f, source) {
     status: STATUS_PENDING,
     checked_in_at: '',
     checked_in_by: '',
-    note: ''
+    note: '',
+    tier: TIERS.indexOf(tier) !== -1 ? tier : 'Walk-in'
   };
   appendRecord_(t, rec);
   return { existing: false, rec: rec };
@@ -360,7 +464,6 @@ function validateForm_(req) {
   };
   if (!f.full_name) fail_('กรุณากรอกชื่อ-นามสกุล');
   if (!/^0\d{9}$/.test(f.phone)) fail_('เบอร์โทรต้องเป็นตัวเลข 10 หลัก');
-  if (!f.mmid) fail_('กรุณากรอก MMID');
   if (req.age20 !== true) fail_('กรุณายืนยันว่ามีอายุ 20 ปีขึ้นไป');
   if (req.pdpa !== true) fail_('กรุณายินยอมให้เก็บข้อมูลส่วนบุคคล');
   return f;
@@ -592,6 +695,7 @@ function pub_(r) {
     company: r.company,
     sales_name: r.sales_name,
     source: r.source,
+    tier: r.tier || 'Walk-in',
     status: r.status,
     checked_in_at: fmt_(r.checked_in_at, 'HH:mm'),
     checked_in_by: r.checked_in_by

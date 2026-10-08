@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -24,10 +24,13 @@
   <main id="landing">
     <div class="narrow">
       <section class="event">
-        <h1 class="js-event-name">Pattaya Event</h1>
+        <div class="invite" id="inviteTier" hidden></div>
+        <h1 class="js-event-name">Wine &amp; Spirits Discovery 2026</h1>
+        <p class="tagline">Sip &bull; Discover &bull; Connect</p>
         <div class="meta">
           <span>วันที่ <b id="eventDate">จะแจ้งให้ทราบ</b></span>
-          <span>สถานที่ <b id="eventVenue">Pattaya</b></span>
+          <span>เวลา <b id="eventTime">-</b></span>
+          <span>สถานที่ <b id="eventVenue">Cape Dara Resort Pattaya</b></span>
         </div>
         <div class="actions">
           <a href="#register" class="btn btn-primary btn-block" id="ctaRegister">ลงทะเบียนเข้าร่วมงาน</a>
@@ -59,10 +62,9 @@
           </div>
 
           <div class="field" data-f="mmid">
-            <label for="mmid">MMID<span class="req">*</span></label>
+            <label for="mmid">MMID <span class="opt">(ถ้ามี)</span></label>
             <input type="text" id="mmid" name="mmid" maxlength="30" autocomplete="off">
             <div class="help">หมายเลขสมาชิก Makro ของคุณ</div>
-            <div class="err">กรุณากรอก MMID</div>
           </div>
 
           <div class="field" data-f="company">
@@ -103,12 +105,13 @@
   <script>
     const params = new URLSearchParams(location.search);
     const isWalkin = params.get('src') === 'walkin';
+    const inviteCode = params.get('inv') || '';
     let eventInfo = {};
 
     loadHero(document.getElementById('hero'));
 
     (async function init() {
-      const cfg = await api('config');
+      const cfg = await api('config', { inv: inviteCode });
       document.getElementById('loadingBox').hidden = true;
       if (!cfg.ok) {
         showClosed(cfg.error || 'ไม่สามารถโหลดข้อมูลงานได้ กรุณาลองใหม่อีกครั้ง');
@@ -120,7 +123,13 @@
         document.title = 'ลงทะเบียน | ' + cfg.event_name;
       }
       if (cfg.event_date) document.getElementById('eventDate').textContent = thaiDate(cfg.event_date);
+      if (cfg.event_time) document.getElementById('eventTime').textContent = cfg.event_time;
       if (cfg.event_venue) document.getElementById('eventVenue').textContent = cfg.event_venue;
+      if (cfg.tier === 'VVIP' || cfg.tier === 'VIP') {
+        const box = document.getElementById('inviteTier');
+        box.innerHTML = '<span class="tier-pill tier-' + cfg.tier + '">คำเชิญ ' + cfg.tier + '</span>';
+        box.hidden = false;
+      }
 
       if (!cfg.registration_open) {
         showClosed(cfg.closed_reason + ' หากลงทะเบียนไว้แล้ว สามารถดู QR ได้จากปุ่ม "ดู QR อีกครั้ง"');
@@ -152,12 +161,12 @@
         company: form.company.value.trim(),
         age20: document.getElementById('age20').checked,
         pdpa: document.getElementById('pdpa').checked,
-        src: isWalkin ? 'walkin' : ''
+        src: isWalkin ? 'walkin' : '',
+        inv: inviteCode
       };
       const bad = [];
       if (!data.full_name) bad.push('full_name');
       if (!/^0\d{9}$/.test(data.phone)) bad.push('phone');
-      if (!data.mmid) bad.push('mmid');
       if (!data.age20) bad.push('age20');
       if (!data.pdpa) bad.push('pdpa');
       form.querySelectorAll('[data-f]').forEach(function (el) {

@@ -1,17 +1,27 @@
+/* ธีมดำ-ทองตาม KV "Discover A World of Flavours" (ชื่อตัวแปร --navy คงไว้ แต่ค่าเป็นสีดำหลัก) */
 :root {
-  --navy: #0f1f3d;
-  --navy-2: #1a2d52;
-  --gold: #b8955a;
-  --gold-soft: #d9c7a3;
-  --bg: #f5f3ee;
+  --navy: #151412;
+  --navy-2: #2c2a25;
+  --gold: #b48d3e;
+  --gold-soft: #e4cf9c;
+  --bg: #f4f1ea;
   --card: #ffffff;
-  --text: #1c1c1c;
-  --muted: #6b6b6b;
-  --line: #ddd6c8;
+  --text: #1c1b18;
+  --muted: #6c675d;
+  --line: #ddd5c4;
   --danger: #a12a2a;
   --danger-bg: #fbeeee;
   --radius: 10px;
+  --display: "Playfair Display", "IBM Plex Sans Thai", Georgia, serif;
+  /* สีกลุ่มลูกค้า / wristband */
+  --t-vvip-bg: #b48d3e; --t-vvip-fg: #151412;
+  --t-vip-bg: #151412;  --t-vip-fg: #e4cf9c;
+  --t-walk-bg: #e7e2d6; --t-walk-fg: #3a372f;
 }
+.tier-pill { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 600; font-size: 13px; letter-spacing: .06em; white-space: nowrap; }
+.tier-VVIP { background: var(--t-vvip-bg); color: var(--t-vvip-fg); }
+.tier-VIP { background: var(--t-vip-bg); color: var(--t-vip-fg); }
+.tier-Walk-in { background: var(--t-walk-bg); color: var(--t-walk-fg); }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -42,8 +52,9 @@ a { color: var(--navy); }
 .narrow { max-width: 560px; margin: 0 auto; padding: 0 16px; }
 
 /* Hero / KV */
-.hero { max-width: 1100px; margin: 0 auto; background: var(--navy); }
-.hero img { display: block; width: 100%; height: auto; }
+.hero { background: #0b0b0a; }
+.hero img { display: block; width: auto; max-width: 100%; max-height: 86vh; height: auto; margin: 0 auto; }
+@media (max-width: 640px) { .hero img { width: 100%; max-height: none; } }
 .hero-placeholder {
   aspect-ratio: 16 / 9;
   display: flex; align-items: center; justify-content: center;
@@ -65,7 +76,9 @@ a { color: var(--navy); }
   box-shadow: 0 6px 24px rgba(15,31,61,.08);
   text-align: center;
 }
-.event h1 { margin: 0 0 12px; font-size: 26px; line-height: 1.3; color: var(--navy); }
+.event h1 { margin: 0 0 12px; font-family: var(--display); font-size: 28px; line-height: 1.25; color: var(--navy); }
+.event .invite { margin: -2px 0 12px; }
+.tagline { font-family: var(--display); font-style: italic; color: var(--gold); margin: -6px 0 10px; }
 .meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 20px; color: var(--muted); }
 .meta b { color: var(--text); font-weight: 600; }
 .event .actions { margin-top: 20px; display: grid; gap: 10px; }

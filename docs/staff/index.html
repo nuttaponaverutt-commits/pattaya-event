@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0f1f3d">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/style.css">
   <link rel="stylesheet" href="../assets/app.css">
   <style>
@@ -94,10 +94,17 @@
           <input type="tel" id="r_phone" inputmode="numeric" maxlength="12" autocomplete="off">
           <div class="err">กรุณากรอกเบอร์โทร 10 หลัก</div>
         </div>
-        <div class="field" data-f="mmid">
-          <label for="r_mmid">MMID<span class="req">*</span></label>
+        <div class="field">
+          <label for="r_mmid">MMID <span class="opt">(ถ้ามี)</span></label>
           <input type="text" id="r_mmid" maxlength="30" autocomplete="off">
-          <div class="err">กรุณากรอก MMID</div>
+        </div>
+        <div class="field">
+          <label for="r_tier">กลุ่ม</label>
+          <select id="r_tier">
+            <option>Walk-in</option>
+            <option>VIP</option>
+            <option>VVIP</option>
+          </select>
         </div>
         <div class="field">
           <label for="r_company">ชื่อร้าน / บริษัท <span class="opt">(ถ้ามี)</span></label>
@@ -369,7 +376,8 @@
         b.type = 'button';
         b.className = 'item';
         b.innerHTML = '<div><div class="name">' + esc(p.full_name) + '</div><div class="meta2">' +
-          esc(p.phone) + ' · MMID ' + esc(p.mmid) + (p.company ? ' · ' + esc(p.company) : '') + '</div></div>' + statusBadge(p.status);
+          esc(p.phone) + (p.mmid ? ' · MMID ' + esc(p.mmid) : '') + (p.company ? ' · ' + esc(p.company) : '') + '</div></div>' +
+          '<div style="display:grid;gap:4px;justify-items:end">' + tierPill(p.tier) + statusBadge(p.status) + '</div>';
         b.addEventListener('click', function () { showResult(p.status === 'มาแล้ว' ? 'duplicate' : 'found', p, p.reg_id); });
         box.appendChild(b);
       });
@@ -388,13 +396,13 @@
         phone: cleanPhone($('#r_phone').value),
         mmid: $('#r_mmid').value.trim(),
         company: $('#r_company').value.trim(),
+        tier: $('#r_tier').value,
         age20: $('#r_age20').checked,
         pdpa: $('#r_pdpa').checked
       };
       const bad = [];
       if (!data.full_name) bad.push('full_name');
       if (!/^0\d{9}$/.test(data.phone)) bad.push('phone');
-      if (!data.mmid) bad.push('mmid');
       if (!data.age20) bad.push('age20');
       if (!data.pdpa) bad.push('pdpa');
       $all('[data-f]', regForm).forEach(function (el) { el.classList.toggle('invalid', bad.indexOf(el.dataset.f) !== -1); });

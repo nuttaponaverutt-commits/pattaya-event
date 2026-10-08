@@ -94,6 +94,42 @@ function selfTest() {
     check('rematch (ถ้า Sales_List ยังว่าง จะแจ้งว่ายังตั้งค่าไม่ครบ = ปกติ)', r.ok || /Settings/.test(r.error), r);
     check('rematch ไม่ทับ manual', readRegs_().byId[id2].sales_name === 'Sales ทดสอบ', readRegs_().byId[id2]);
 
+    // กลุ่มลูกค้า + MMID ไม่บังคับ
+    const codes = getSettings_();
+    r = call(Object.assign({ action: 'register' }, form({ phone: '0000000004', mmid: '' })));
+    if (r.ok && !r.existing) createdIds.push(r.reg_id);
+    check('register ไม่มี MMID ได้ และไม่มีโค้ด = Walk-in', r.ok && r.tier === 'Walk-in', r);
+    if (codes.invite_code_vvip) {
+      r = call({ action: 'config', inv: codes.invite_code_vvip });
+      check('config ลิงก์ VVIP', r.tier === 'VVIP', r);
+      r = call(Object.assign({ action: 'register', inv: codes.invite_code_vvip }, form({ phone: '0000000005', mmid: '' })));
+      if (r.ok && !r.existing) createdIds.push(r.reg_id);
+      check('register ลิงก์ VVIP', r.ok && r.tier === 'VVIP', r);
+      r = call(Object.assign({ action: 'register', inv: codes.invite_code_vip }, form({})));
+      check('ลงซ้ำด้วยลิงก์ VIP ยกระดับ Walk-in เป็น VIP', r.ok && r.existing && r.tier === 'VIP', r);
+      r = call(Object.assign({ action: 'register', src: 'walkin' }, form({ phone: '0000000005', mmid: '' })));
+      check('ลงซ้ำด้วยลิงก์ต่ำกว่า ไม่ลดระดับ', r.ok && r.existing && r.tier === 'VVIP', r);
+    } else {
+      results.push('SKIP ยังไม่มี invite_code ใน Settings (รัน setup ก่อน)');
+    }
+    r = call({ action: 'links', token: adminTok });
+    check('links', r.ok && 'vvip' in r, r);
+
+    // Lucky draw (สุ่มเฉพาะกลุ่ม VVIP ของข้อมูลทดสอบ ถ้ามีคนจริงในกลุ่มนี้ก็อาจถูกสุ่มได้ แต่ log จะถูกลบตอนจบ)
+    if (codes.invite_code_vvip) {
+      const vvipId = readRegs_().records.find(function (x) { return x.phone === '0000000005'; }).reg_id;
+      call({ action: 'checkin', token: adminTok, reg_id: vvipId, device: 'selfTest' });
+      r = call({ action: 'draw', token: adminTok, tier: 'VVIP', round: 'selfTest' });
+      check('draw สุ่มได้ผู้โชคดี', r.ok && r.winner && r.winner.tier === 'VVIP', r);
+      const winId = r.winner && r.winner.reg_id;
+      r = call({ action: 'draw_list', token: adminTok });
+      check('draw_list', r.ok && r.winners.some(function (w) { return w.reg_id === winId; }), r);
+      r = call({ action: 'draw_void', token: adminTok, reg_id: winId });
+      check('draw_void สละสิทธิ์', r.ok, r);
+    }
+    r = call({ action: 'draw', token: staffTok, tier: 'VVIP', round: 'selfTest' });
+    check('staff สุ่มรางวัลไม่ได้', !r.ok && r.auth === false, r);
+
     r = call({ action: 'logout', token: staffTok });
     r = call({ action: 'scan', token: staffTok, reg_id: id1 });
     check('หลัง logout token ใช้ไม่ได้', !r.ok && r.auth === false, r);
@@ -106,6 +142,11 @@ function selfTest() {
     const v = log.getDataRange().getValues();
     for (let i = v.length - 1; i >= 1; i--) {
       if (v[i][5] === 'selfTest' || v[i][5] === 'admin' && createdIds.indexOf(v[i][1]) !== -1) log.deleteRow(i + 1);
+    }
+    const draw = sheet_('Lucky_Draw');
+    if (draw) {
+      const dv = draw.getDataRange().getValues();
+      for (let i = dv.length - 1; i >= 1; i--) if (dv[i][1] === 'selfTest') draw.deleteRow(i + 1);
     }
     if (adminTok) call({ action: 'logout', token: adminTok });
     if (staffTok) call({ action: 'logout', token: staffTok });
