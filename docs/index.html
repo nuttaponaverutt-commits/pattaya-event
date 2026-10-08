@@ -184,7 +184,11 @@
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.textContent = 'กำลังส่งข้อมูล...';
+      const slowTimer = setTimeout(function () {
+        btn.textContent = 'มีผู้ลงทะเบียนจำนวนมาก กรุณารอสักครู่ และอย่าปิดหน้านี้';
+      }, 8000);
       const res = await api('register', data);
+      clearTimeout(slowTimer);
       btn.disabled = false;
       btn.textContent = 'ส่งข้อมูลลงทะเบียน';
 

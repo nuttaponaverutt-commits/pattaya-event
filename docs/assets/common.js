@@ -8,11 +8,15 @@ async function api(action, data) {
   let last;
   for (let i = 0; i < tries; i++) {
     if (i > 0) await new Promise(function (r) { setTimeout(r, 1200 * i + Math.random() * 1200); });
+    // Google บางช่วงตอบช้ามาก รอไม่เกิน 30 วินาทีต่อครั้ง แล้วส่งใหม่
+    const ctrl = window.AbortController ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 30000) : null;
     try {
       const res = await fetch(window.API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(Object.assign({ action: action }, data || {}))
+        body: JSON.stringify(Object.assign({ action: action }, data || {})),
+        signal: ctrl ? ctrl.signal : undefined
       });
       // ตอน Google รับคำขอไม่ไหว จะตอบเป็นหน้า HTML ไม่ใช่ JSON ให้ถือเป็นระบบยุ่ง
       last = await res.json().catch(function () { return { ok: false, busy: true, error: 'ระบบกำลังยุ่ง กรุณาลองใหม่อีกครั้ง' }; });
@@ -21,7 +25,9 @@ async function api(action, data) {
         return last;
       }
     } catch (e) {
-      last = { ok: false, network: true, error: 'เชื่อมต่อระบบไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่' };
+      last = { ok: false, network: true, error: 'เชื่อมต่อระบบไม่ได้ หรือระบบตอบช้าเกินไป กรุณาลองใหม่อีกครั้ง' };
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
   return last;

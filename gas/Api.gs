@@ -71,9 +71,8 @@ function apiConfig_(req) {
   const tier = tierFromCode_(s0, req && req.inv);
   const hit = cacheGet_('cfg_' + tier);
   if (hit) return JSON.parse(hit);
-  const s = getSettings_();
-  const count = countRegistrations_();
-  const state = onlineState_(s, count);
+  const s = s0;
+  const state = onlineState_(s, countCached_());
   const out = {
     ok: true,
     event_name: String(s.event_name || ''),
@@ -589,6 +588,15 @@ function countRegistrations_() {
   return readRegs_().records.length;
 }
 
+// จำนวนผู้ลงทะเบียน (เก็บไว้ 60 วินาที อัปเดตทุกครั้งที่มีคนลงทะเบียนใหม่) ใช้แค่เช็คว่าเต็มหรือยังตอนเปิดหน้า
+function countCached_() {
+  const hit = cacheGet_('reg_count');
+  if (hit !== null && hit !== undefined) return Number(hit);
+  const n = countRegistrations_();
+  cachePut_('reg_count', String(n), 60);
+  return n;
+}
+
 function appendRecord_(t, rec) {
   const row = t.sh.getLastRow() + 1;
   const range = t.sh.getRange(row, 1, 1, t.h.length);
@@ -601,6 +609,7 @@ function appendRecord_(t, rec) {
   t.records.push(rec);
   t.byId[rec.reg_id] = rec;
   if (rec.short_code) t.byCode[rec.short_code] = rec;
+  cachePut_('reg_count', String(t.records.length), 60);
 }
 
 function writeFields_(t, rec, upd) {
