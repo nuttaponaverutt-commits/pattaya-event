@@ -12,7 +12,7 @@
   --danger: #a12a2a;
   --danger-bg: #fbeeee;
   --radius: 10px;
-  --display: "Playfair Display", "IBM Plex Sans Thai", Georgia, serif;
+  --display: "Bodoni Moda", "IBM Plex Sans Thai", Georgia, serif;
   /* สีกลุ่มลูกค้า / wristband */
   --t-vvip-bg: #b48d3e; --t-vvip-fg: #151412;
   --t-vip-bg: #151412;  --t-vip-fg: #e4cf9c;
@@ -69,7 +69,8 @@ a { color: var(--navy); }
 /* Event info */
 .event {
   background: var(--card);
-  margin: -32px auto 0;
+  /* ไม่ซ้อนทับ KV เพราะมุมล่างของ KV มีโลโก้ Makro */
+  margin: 20px auto 0;
   position: relative;
   border-radius: var(--radius);
   padding: 28px 24px;

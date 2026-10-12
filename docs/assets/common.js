@@ -70,7 +70,7 @@ async function drawQrCard(info) {
   const g = c.getContext('2d');
   const font = '"IBM Plex Sans Thai", sans-serif';
 
-  const display = '"Playfair Display", ' + font;
+  const display = '"Bodoni Moda", ' + font;
   const tier = info.tier || 'Walk-in';
   const tierColors = { 'VVIP': ['#b48d3e', '#151412'], 'VIP': ['#151412', '#e4cf9c'], 'Walk-in': ['#e7e2d6', '#3a372f'] }[tier] || ['#e7e2d6', '#3a372f'];
 
