@@ -62,7 +62,17 @@
     }
 
     const saved = loadMyReg();
-    if (saved && saved.reg_id) show(saved);
+    if (saved && saved.reg_id) {
+      show(saved);
+      // ดึงข้อมูลล่าสุด (รหัส 5 ตัว / กลุ่ม) มาแทนการ์ดที่จำไว้ในเครื่อง
+      api('card', { reg_id: saved.reg_id }).then(function (res) {
+        if (!res.ok) return;
+        if (res.short_code !== saved.short_code || res.tier !== saved.tier || res.full_name !== saved.full_name) {
+          saveMyReg(res);
+          show(res);
+        }
+      });
+    }
 
     document.getElementById('notMe').addEventListener('click', function (e) {
       e.preventDefault();

@@ -12,6 +12,7 @@ const PUBLIC_ACTIONS = {
   config: apiConfig_,
   register: apiRegister_,
   lookup: apiLookup_,
+  card: apiCard_,
   login: apiLogin_
 };
 // staff และ admin ใช้ได้
@@ -117,6 +118,13 @@ function apiLookup_(req) {
   const hit = t.records.find(function (r) { return phoneKey_(r.phone) === key; });
   if (!hit) return { ok: false, error: 'ไม่พบการลงทะเบียนของเบอร์นี้' };
   return { ok: true, reg_id: hit.reg_id, short_code: hit.short_code, full_name: hit.full_name, tier: hit.tier };
+}
+
+// ข้อมูลการ์ด QR ล่าสุดจากรหัสใน QR (ใช้ให้การ์ดที่เก็บในมือถือเป็นข้อมูลปัจจุบัน เช่น รหัส 5 ตัว กลุ่ม)
+function apiCard_(req) {
+  const rec = readRegs_().byId[normId_(req.reg_id)];
+  if (!rec) return { ok: false, error: 'ไม่พบการลงทะเบียนนี้' };
+  return { ok: true, reg_id: rec.reg_id, short_code: rec.short_code, full_name: rec.full_name, tier: rec.tier || 'Walk-in' };
 }
 
 function apiLogin_(req) {
