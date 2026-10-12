@@ -90,9 +90,15 @@ Agenda: 17:00 ลงทะเบียน · 19:20 Lucky Draw #1 · 20:10 Lucky 
    - เต็ม: "ขออภัย ที่นั่งเต็มแล้ว / ขณะนี้มีผู้ลงทะเบียนครบตามจำนวนที่กำหนดแล้ว ขอขอบพระคุณที่ให้ความสนใจในงาน Wine & Spirits Discovery 2026 / หากท่านลงทะเบียนไว้แล้ว สามารถเรียกดู QR สำหรับเข้างานได้ที่ปุ่มด้านล่าง / Registration is now full. Thank you for your interest." + ปุ่ม ดู QR ของฉัน
    - ปิด: "ปิดรับลงทะเบียนแล้ว / ขอขอบพระคุณที่ให้ความสนใจ ขณะนี้งาน Wine & Spirits Discovery 2026 ปิดรับลงทะเบียนเรียบร้อยแล้ว / หากท่านลงทะเบียนไว้แล้ว ... / สอบถามเพิ่มเติม กรุณาติดต่อ Sales ที่ดูแลท่าน / Registration is now closed." + ปุ่ม ดู QR ของฉัน
 
+## KV และฟอนต์ (อัปเดต 12 ต.ค.)
+
+- `docs/assets/kv.jpg` เป็น KV ล่าสุดจากทีมออกแบบแล้ว (FRIDAY, 6 NOVEMBER 2026 · 5.00–9.00 PM · Vela Grand Ballroom 2nd Floor · มีโลโก้ Makro มุมซ้ายล่าง ห้ามให้อะไรซ้อนทับ)
+- ฟอนต์หัวข้อใช้ **Bodoni Moda** จาก Google Fonts (ตรงกับ KV) เนื้อหาใช้ IBM Plex Sans Thai
+- ฟอนต์อื่นใน KV ไม่ได้ใช้บนเว็บ: Agloist (ตัวเขียน "Discover") และ Ace Sans **Demo** (วันที่) เพราะไฟล์ Demo มักห้ามใช้เชิงพาณิชย์ ต้องตรวจลิขสิทธิ์ก่อน
+- หน้า Design Review ให้ PIC แสดงความเห็นรายหน้าจอ: https://claude.ai/artifact/A1QRc9bBhLbkZWeKMuLYJX (ความเห็นอยู่ใน artifact database คอลเลกชัน `feedback` อ่านด้วย ArtifactData)
+
 ## ยังขาดจากทีม
 
-- KV ฉบับคอนเฟิร์ม (ตอนนี้ใช้ภาพ invitation จาก proposal PDF ไปก่อน ที่ `docs/assets/kv.jpg`)
 - ข้อความ PDPA ฉบับจริงจากฝ่ายกฎหมาย
 - รายชื่อลูกค้า VVIP/VIP จาก Sales: MMID, ชื่อร้าน, ชื่อผู้ติดต่อ, เบอร์โทร, ชื่อ Sales, กลุ่ม, สาขา
 - รายชื่อ Sales ทั้งหมด (ถ้าเอาลิงก์แยกราย Sales)
