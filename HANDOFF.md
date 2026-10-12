@@ -95,7 +95,8 @@ Agenda: 17:00 ลงทะเบียน · 19:20 Lucky Draw #1 · 20:10 Lucky 
 - `docs/assets/kv.jpg` เป็น KV ล่าสุดจากทีมออกแบบแล้ว (FRIDAY, 6 NOVEMBER 2026 · 5.00–9.00 PM · Vela Grand Ballroom 2nd Floor · มีโลโก้ Makro มุมซ้ายล่าง ห้ามให้อะไรซ้อนทับ)
 - ฟอนต์หัวข้อใช้ **Bodoni Moda** จาก Google Fonts (ตรงกับ KV) เนื้อหาใช้ IBM Plex Sans Thai
 - ฟอนต์อื่นใน KV ไม่ได้ใช้บนเว็บ: Agloist (ตัวเขียน "Discover") และ Ace Sans **Demo** (วันที่) เพราะไฟล์ Demo มักห้ามใช้เชิงพาณิชย์ ต้องตรวจลิขสิทธิ์ก่อน
-- หน้า Design Review ให้ PIC แสดงความเห็นรายหน้าจอ: https://claude.ai/artifact/A1QRc9bBhLbkZWeKMuLYJX (ความเห็นอยู่ใน artifact database คอลเลกชัน `feedback` อ่านด้วย ArtifactData)
+- Design Review ให้ PIC แสดงความเห็น: ใช้ **Google Form** จากโปรเจกต์ Apps Script แยก `Desktop\pattaya-design-review` (https://script.google.com/d/1Od4KgI00rfVv79eDzT4WhEHZk63iXQ_96C4IDGY8PQbN1wXas3umNl34/edit) รัน `createDesignReviewForm` แล้วคำตอบเข้า Sheet แยก ภาพในฟอร์มดึงจาก `docs/review/`
+  - หน้า Design Review เดิมบน claude.ai (https://claude.ai/artifact/A1QRc9bBhLbkZWeKMuLYJX) ยังเก็บไว้ ยังไม่ได้ใช้
 
 ## ยังขาดจากทีม
 
