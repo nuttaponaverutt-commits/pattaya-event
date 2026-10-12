@@ -96,6 +96,7 @@ Agenda: 17:00 ลงทะเบียน · 19:20 Lucky Draw #1 · 20:10 Lucky 
 - ฟอนต์หัวข้อใช้ **Bodoni Moda** จาก Google Fonts (ตรงกับ KV) เนื้อหาใช้ IBM Plex Sans Thai
 - ฟอนต์อื่นใน KV ไม่ได้ใช้บนเว็บ: Agloist (ตัวเขียน "Discover") และ Ace Sans **Demo** (วันที่) เพราะไฟล์ Demo มักห้ามใช้เชิงพาณิชย์ ต้องตรวจลิขสิทธิ์ก่อน
 - Design Review ให้ PIC แสดงความเห็น: ใช้ **Google Form** จากโปรเจกต์ Apps Script แยก `Desktop\pattaya-design-review` (https://script.google.com/d/1Od4KgI00rfVv79eDzT4WhEHZk63iXQ_96C4IDGY8PQbN1wXas3umNl34/edit) รัน `createDesignReviewForm` แล้วคำตอบเข้า Sheet แยก ภาพในฟอร์มดึงจาก `docs/review/`
+  - ฟอร์มสร้างแล้ว 12 ต.ค.: ส่ง PIC https://docs.google.com/forms/d/e/1FAIpQLSfzbjOcp37u2fkcF6BFPr-dIZoCIEEPWZlcOuXf8iEJwr5AIA/viewform · แก้ฟอร์ม https://docs.google.com/forms/d/1Y_sZq7rlizE5CWdsyZAcZsMQJ3h5mpLbiASY87jYRXA/edit · คำตอบ https://docs.google.com/spreadsheets/d/1tK4X4_VF0CaxhO3pL1IAmOqOVmPDNJN0KeAHdFieDNA/edit
   - หน้า Design Review เดิมบน claude.ai (https://claude.ai/artifact/A1QRc9bBhLbkZWeKMuLYJX) ยังเก็บไว้ ยังไม่ได้ใช้
 
 ## ยังขาดจากทีม
