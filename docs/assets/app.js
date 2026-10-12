@@ -67,10 +67,16 @@ function tierPill(tier) {
   return '<span class="tier-pill tier-' + esc(t) + '">' + esc(t) + '</span>';
 }
 
+// สี wristband จริงจากแบบที่ผลิต: A ทอง / B แดง / C ฟ้า (รอทีมยืนยันการจับคู่กับกลุ่ม)
+const WRISTBAND = { 'VVIP': { letter: 'A', color: 'ทอง' }, 'VIP': { letter: 'B', color: 'แดง' }, 'Walk-in': { letter: 'C', color: 'ฟ้า' } };
+
 function personDetails(p) {
   const t = p.tier || 'Walk-in';
-  return '<div class="wristband tier-' + esc(t) + '"><small>Wristband</small>' + esc(t) + '</div>' +
+  const w = WRISTBAND[t] || WRISTBAND['Walk-in'];
+  return '<div class="wristband band-' + esc(t) + '"><span class="letter">' + w.letter + '</span>' +
+    '<span class="what"><small>Wristband สี' + w.color + '</small>' + esc(t) + '</span></div>' +
     '<p class="person-name">' + esc(p.full_name) + '</p>' +
+    (p.customer_name && p.customer_name !== p.full_name ? '<p class="makro-name">ลูกค้า Makro: ' + esc(p.customer_name) + (p.store ? ' · ' + esc(p.store) : '') + '</p>' : '') +
     '<dl class="kv">' +
     '<dt>MMID</dt><dd>' + esc(p.mmid || '-') + '</dd>' +
     '<dt>ร้าน/บริษัท</dt><dd>' + esc(p.company || '-') + '</dd>' +

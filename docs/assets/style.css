@@ -84,6 +84,11 @@ a { color: var(--navy); }
 .meta b { color: var(--text); font-weight: 600; }
 .event .actions { margin-top: 20px; display: grid; gap: 10px; }
 .notice { margin-top: 16px; font-size: 14px; color: var(--muted); }
+.closed-panel { margin-top: 22px; padding-top: 22px; border-top: 2px solid var(--gold); display: grid; gap: 10px; }
+.closed-panel h2 { margin: 0; font-size: 22px; color: var(--navy); }
+.closed-panel p { margin: 0; color: var(--muted); font-size: 15px; }
+.closed-panel p.en { font-family: var(--display); font-style: italic; color: var(--gold); }
+.closed-panel .btn { margin-top: 8px; }
 
 /* Section */
 .section { padding: 40px 0 8px; }

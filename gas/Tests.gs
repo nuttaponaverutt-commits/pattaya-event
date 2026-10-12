@@ -91,7 +91,7 @@ function selfTest() {
     r = call({ action: 'sales_names', token: adminTok });
     check('sales_names', r.ok && Array.isArray(r.names), r);
     r = call({ action: 'rematch', token: adminTok });
-    check('rematch (ถ้า Sales_List ยังว่าง จะแจ้งว่ายังตั้งค่าไม่ครบ = ปกติ)', r.ok || /Settings/.test(r.error), r);
+    check('rematch (ถ้ายังไม่มีรายชื่อลูกค้า จะแจ้งให้นำเข้าก่อน = ปกติ)', r.ok || /รายชื่อลูกค้า/.test(r.error), r);
     check('rematch ไม่ทับ manual', readRegs_().byId[id2].sales_name === 'Sales ทดสอบ', readRegs_().byId[id2]);
 
     // กลุ่มลูกค้า + MMID ไม่บังคับ
@@ -137,6 +137,28 @@ function selfTest() {
     r = call({ action: 'lookup', phone: '0000000001' });
     check('ดู QR อีกครั้งได้รหัส 5 ตัวด้วย', r.ok && r.short_code === code1, r);
 
+    // รายชื่อลูกค้า + จับคู่หลายชั้น (ลูกค้าทดสอบ MMID ขึ้นต้น 0999 จะถูกลบตอนจบ)
+    r = call({ action: 'customers_import', token: adminTok, rows: [
+      { mmid: '09990011111111', cust_no: '99900111', customer_name: 'บจ. ทดสอบระบบจำกัด', customer_type: 'บริษัท', sales_name: 'Sales ทดสอบ A', store: '999 - ทดสอบ', spend_3m: 500000, suggested_tier: 'VVIP' },
+      { mmid: '09990022222222', cust_no: '99900222', customer_name: 'ทดสอบ ลูกค้าบุคคล', customer_type: 'บุคคล', sales_name: 'Sales ทดสอบ B', store: '999 - ทดสอบ', spend_3m: 50000, suggested_tier: 'VIP' }
+    ] });
+    check('นำเข้ารายชื่อลูกค้า', r.ok && r.added + r.updated === 2, r);
+    r = call({ action: 'customers_bulk', token: adminTok, keys: ['m:9990011111111'], fields: { invited: true, tier: 'VVIP' } });
+    check('ตั้งให้เชิญเป็น VVIP', r.ok && r.changed === 1, r);
+    r = call(Object.assign({ action: 'register' }, form({ full_name: 'คนมาแทน', phone: '0000000006', mmid: '99900111', company: '' })));
+    if (r.ok && !r.existing) createdIds.push(r.reg_id);
+    let rec = r.ok && readRegs_().byId[r.reg_id];
+    check('จับคู่ด้วยเลขลูกค้า + ได้กลุ่ม VVIP จากรายชื่อเชิญ', rec && rec.match_method === 'custno' && rec.sales_name === 'Sales ทดสอบ A' && rec.tier === 'VVIP', rec || r);
+    r = call(Object.assign({ action: 'register' }, form({ full_name: 'นาย ทดสอบ  ลูกค้าบุคคล', phone: '0000000007', mmid: '' })));
+    if (r.ok && !r.existing) createdIds.push(r.reg_id);
+    rec = r.ok && readRegs_().byId[r.reg_id];
+    check('จับคู่จากชื่อ-นามสกุล (ตัดคำนำหน้า/ช่องว่าง)', rec && rec.match_method === 'name' && rec.sales_name === 'Sales ทดสอบ B', rec || r);
+    r = call({ action: 'customers', token: adminTok });
+    const tc = r.ok && r.customers.find(function (x) { return x.cust_no === '99900111'; });
+    check('รายชื่อลูกค้าแสดงสถานะลงทะเบียนแล้ว', tc && tc.status === 'ลงทะเบียนแล้ว' && tc.invited === true, tc || r);
+    r = call({ action: 'settings_get', token: adminTok });
+    check('อ่านการตั้งค่า', r.ok && 'registration_open' in r, r);
+
     r = call({ action: 'draw', token: staffTok, tier: 'VVIP', round: 'selfTest' });
     check('staff สุ่มรางวัลไม่ได้', !r.ok && r.auth === false, r);
 
@@ -152,6 +174,11 @@ function selfTest() {
     const v = log.getDataRange().getValues();
     for (let i = v.length - 1; i >= 1; i--) {
       if (v[i][5] === 'selfTest' || v[i][5] === 'admin' && createdIds.indexOf(v[i][1]) !== -1) log.deleteRow(i + 1);
+    }
+    const cus = sheet_('Customers');
+    if (cus && cus.getLastRow() > 1) {
+      const cv = cus.getDataRange().getValues();
+      for (let i = cv.length - 1; i >= 1; i--) if (String(cv[i][0]).indexOf('0999') === 0) cus.deleteRow(i + 1);
     }
     const draw = sheet_('Lucky_Draw');
     if (draw) {

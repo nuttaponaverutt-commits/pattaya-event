@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="th">
 <head>
   <meta charset="utf-8">
@@ -83,6 +83,41 @@
     .link-row .url { font-family: "IBM Plex Mono", monospace; font-size: 13px; word-break: break-all; background: var(--bg); padding: 8px 10px; border-radius: 6px; user-select: all; }
     .link-row .head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
     .link-row .head .btn { flex: none; white-space: nowrap; }
+
+    /* เปิด/ปิดรับลงทะเบียน */
+    .regctl { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+    .regctl-state { display: flex; align-items: center; gap: 12px; }
+    .dot-state { width: 14px; height: 14px; border-radius: 50%; background: var(--line); flex: none; }
+    .dot-state.on { background: var(--ok); box-shadow: 0 0 0 4px var(--ok-bg); }
+    .dot-state.off { background: var(--bad); box-shadow: 0 0 0 4px var(--bad-bg); }
+    .dot-state.full { background: #e0a91b; box-shadow: 0 0 0 4px var(--warn-bg); }
+    #regToggle.open { background: var(--bad); color: #fff; }
+    #regToggle.closed { background: var(--ok); color: #fff; }
+
+    /* รายชื่อลูกค้า */
+    .cust-sum { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+    .cust-sum b { color: var(--text); font-variant-numeric: tabular-nums; }
+    @media (min-width: 900px) { .cust-filters { grid-template-columns: 2fr repeat(5, 1fr); } }
+    table.cust td { vertical-align: middle; }
+    table.cust .cname { font-weight: 600; }
+    table.cust select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 13px; background: #fff; }
+    table.cust input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--navy); }
+    .sug { font-size: 11px; color: var(--muted); display: block; }
+    .st-none { color: var(--muted); }
+    .st-reg { color: var(--navy); font-weight: 600; }
+    .st-in { color: var(--ok); font-weight: 600; }
+    .weak { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); margin-left: 4px; }
+    .imp-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; font-size: 14px; margin-bottom: 14px; }
+    .imp-stats b { font-variant-numeric: tabular-nums; }
+    .imp-tiers { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 14px; margin-bottom: 10px; }
+    .imp-tiers input { width: 80px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+    @media (max-width: 899px) {
+      table.cust thead { display: none; }
+      table.cust, table.cust tbody, table.cust tr, table.cust td { display: block; width: 100%; }
+      table.cust tr { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+      table.cust td { border: 0; padding: 2px 0; }
+    }
     .count-line { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
     .tools { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -138,8 +173,11 @@
         <button type="button" data-nav="sales">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/></svg>สรุปราย Sales
         </button>
+        <button type="button" data-nav="customers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM4 9h16M9 9v11"/></svg>รายชื่อลูกค้า
+        </button>
         <button type="button" data-nav="list">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>รายชื่อ
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>ผู้ลงทะเบียน
         </button>
         <button type="button" data-nav="links">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>ลิงก์ลงทะเบียน
@@ -156,6 +194,14 @@
             <h2>ภาพรวม</h2>
             <span class="updated" id="dashUpdated"></span>
           </div>
+          <div class="regctl" id="regCtl">
+            <div class="regctl-state"><span class="dot-state" id="regDot"></span><div><b id="regState">กำลังโหลด...</b><div class="muted" id="regSub"></div></div></div>
+            <div class="tools">
+              <button class="btn btn-sm" type="button" id="regToggle" disabled>-</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="regSettings" disabled>จำนวนรับ / ข้อความ</button>
+            </div>
+          </div>
+          <div class="alert" id="weakAlert" hidden></div>
           <div class="kpis">
             <div class="kpi accent"><div class="label">ลงทะเบียนทั้งหมด</div><div class="value" id="kTotal">-</div></div>
             <div class="kpi"><div class="label">มาแล้ว</div><div class="value" id="kIn">-</div></div>
@@ -176,6 +222,43 @@
               <ul class="recent" id="recentList"><li class="muted">กำลังโหลด...</li></ul>
             </div>
           </div>
+          <div class="card" style="margin-top:16px">
+            <h3>รายสาขา (10 อันดับแรก)</h3>
+            <div class="table-wrap"><table class="data"><thead><tr><th>สาขา</th><th class="num">เชิญ</th><th class="num">ลงทะเบียน</th><th class="num">มาแล้ว</th></tr></thead><tbody id="storeTop"></tbody></table></div>
+          </div>
+        </section>
+
+        <!-- Customers -->
+        <section data-view="customers" hidden>
+          <div class="view-head">
+            <h2>รายชื่อลูกค้า</h2>
+            <div class="tools">
+              <label class="btn btn-primary btn-sm" for="importFile">นำเข้าไฟล์ Excel</label>
+              <input type="file" id="importFile" accept=".xlsx,.xls,.csv" hidden>
+              <button class="btn btn-ghost btn-sm" type="button" id="applySuggested">เชิญตามกลุ่มที่แนะนำ</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="bulkInvite">ตั้งค่ารายการที่กรองอยู่</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="custExport">Export CSV</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="custReload">รีเฟรช</button>
+            </div>
+          </div>
+          <p class="muted" style="font-size:14px;margin:-6px 0 14px">นำเข้าไฟล์ยอดขาย (เช่น ยอด ALC แท็บ Export) หรือตาราง Excel ที่มีคอลัมน์ MMID ได้ตรงๆ ระบบรวมยอดต่อลูกค้า แนะนำกลุ่มจากยอดซื้อ และจับคู่กับผู้ลงทะเบียนให้เอง นำเข้าซ้ำได้ ข้อมูลที่ตั้งไว้ (เชิญ / กลุ่ม / เบอร์ / หมายเหตุ) ไม่หาย</p>
+          <div class="cust-sum" id="custSum"></div>
+          <div class="filters cust-filters">
+            <input class="q" type="search" id="cQ" placeholder="ค้นหา ชื่อ MMID เลขลูกค้า เบอร์">
+            <select id="cInvited"><option value="">เชิญ / ไม่เชิญ</option><option value="yes">เชิญแล้ว</option><option value="no">ยังไม่เชิญ</option></select>
+            <select id="cTier"><option value="">ทุกกลุ่ม</option><option>VVIP</option><option>VIP</option><option value="sug-VVIP">แนะนำ VVIP</option><option value="sug-VIP">แนะนำ VIP</option></select>
+            <select id="cStatus"><option value="">ทุกสถานะ</option><option>ยังไม่ลงทะเบียน</option><option>ลงทะเบียนแล้ว</option><option>มาแล้ว</option></select>
+            <select id="cSales"><option value="">ทุก Sales</option></select>
+            <select id="cStore"><option value="">ทุกสาขา</option></select>
+          </div>
+          <div class="count-line" id="cCount"></div>
+          <div class="table-wrap">
+            <table class="data cust">
+              <thead><tr><th>เชิญ</th><th>กลุ่ม</th><th>ลูกค้า</th><th>Sales</th><th>สาขา</th><th class="num">ยอด 3 เดือน</th><th>สถานะ</th><th></th></tr></thead>
+              <tbody id="custBody"><tr><td colspan="8" class="muted">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
+          <div style="text-align:center;margin-top:12px"><button class="btn btn-ghost btn-sm" type="button" id="custMore" hidden>แสดงเพิ่ม</button></div>
         </section>
 
         <!-- Sales summary -->
@@ -186,17 +269,24 @@
           </div>
           <div class="table-wrap">
             <table class="data">
-              <thead><tr><th>Sales</th><th class="num">ลูกค้าใน list</th><th class="num">ลงทะเบียน</th><th class="num">มาจริง</th><th class="num">% มา</th></tr></thead>
-              <tbody id="salesBody"><tr><td colspan="5" class="muted">กำลังโหลด...</td></tr></tbody>
+              <thead><tr><th>Sales</th><th class="num">ลูกค้าในรายชื่อ</th><th class="num">เชิญ</th><th class="num">ลงทะเบียน</th><th class="num">มาจริง</th><th class="num">% มา (จากที่เชิญ)</th></tr></thead>
+              <tbody id="salesBody"><tr><td colspan="6" class="muted">กำลังโหลด...</td></tr></tbody>
             </table>
           </div>
-          <p class="muted" style="margin-top:10px">"ลูกค้าใน list" นับจากแท็บ Sales_List / "ไม่มี Sales" คือผู้ลงทะเบียนที่จับคู่ Sales ไม่ได้</p>
+          <p class="muted" style="margin-top:10px">กดชื่อ Sales เพื่อดูรายชื่อลูกค้าของคนนั้น / "ไม่มี Sales" คือผู้ลงทะเบียนที่จับคู่กับรายชื่อลูกค้าไม่ได้</p>
+          <h2 style="font-size:19px;margin:28px 0 12px;color:var(--navy)">สรุปรายสาขา</h2>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th>สาขา</th><th class="num">ลูกค้าในรายชื่อ</th><th class="num">เชิญ</th><th class="num">ลงทะเบียน</th><th class="num">มาจริง</th></tr></thead>
+              <tbody id="storeBody"><tr><td colspan="5" class="muted">กำลังโหลด...</td></tr></tbody>
+            </table>
+          </div>
         </section>
 
         <!-- Registrations -->
         <section data-view="list" hidden>
           <div class="view-head">
-            <h2>รายชื่อ</h2>
+            <h2>ผู้ลงทะเบียน</h2>
             <div class="tools">
               <button class="btn btn-ghost btn-sm" type="button" data-action="rematch">Match ใหม่</button>
               <button class="btn btn-ghost btn-sm" type="button" id="exportBtn">Export CSV</button>
@@ -241,8 +331,11 @@
       <button type="button" data-nav="sales">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/></svg>Sales
       </button>
+      <button type="button" data-nav="customers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM4 9h16M9 9v11"/></svg>ลูกค้า
+      </button>
       <button type="button" data-nav="list">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>รายชื่อ
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>ลงทะเบียน
       </button>
       <button type="button" data-nav="links">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>ลิงก์
@@ -251,6 +344,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
   <script src="../assets/config.js"></script>
   <script src="../assets/common.js"></script>
   <script src="../assets/app.js"></script>
@@ -263,6 +357,11 @@
     let records = [];
     let salesNames = [];
     let dashTimer = null;
+    let customers = [];
+    let custLimit = 200;
+    let pendingCustSales = '';
+    let pendingWeak = false;
+    const WEAK = ['name', 'company']; // จับคู่จากชื่อ ควรให้ Admin ตรวจ
 
     api('config').then(function (cfg) {
       if (!cfg.ok) return;
@@ -325,8 +424,12 @@
       clearInterval(dashTimer);
       if (name === 'dashboard' || name === 'sales') {
         loadDashboard();
-        if (name === 'dashboard') dashTimer = setInterval(function () { if (!document.hidden) loadDashboard(); }, 15000);
+        if (name === 'dashboard') {
+          loadRegSettings();
+          dashTimer = setInterval(function () { if (!document.hidden) loadDashboard(); }, 15000);
+        }
       }
+      if (name === 'customers') loadCustomers();
       if (name === 'list') loadList();
       if (name === 'links') loadLinks();
       window.scrollTo(0, 0);
@@ -370,10 +473,454 @@
         return '<li><span><b>' + esc(p.full_name) + '</b><br><span class="muted">' + esc(p.company || p.mmid) + ' · ' + esc(p.checked_in_by) + '</span></span><span class="t">' + esc(p.checked_in_at) + '</span></li>';
       }).join('') : '<li class="muted">ยังไม่มีการเช็คอิน</li>';
 
+      const n = function (v) { return (v || 0).toLocaleString(); };
       $('#salesBody').innerHTML = d.sales_summary.length ? d.sales_summary.map(function (s) {
-        const pct = s.registered ? Math.round(s.attended / s.registered * 100) + '%' : '-';
-        return '<tr><td>' + esc(s.sales_name) + '</td><td class="num">' + (s.sales_name === NONE ? '-' : s.in_list) + '</td><td class="num">' + s.registered + '</td><td class="num">' + s.attended + '</td><td class="num">' + pct + '</td></tr>';
-      }).join('') : '<tr><td colspan="5" class="muted">ยังไม่มีข้อมูล</td></tr>';
+        const base = s.invited || s.registered;
+        const pct = base ? Math.round(s.attended / base * 100) + '%' : '-';
+        const link = s.sales_name === NONE ? esc(s.sales_name) : '<a href="#" data-sales="' + esc(s.sales_name) + '">' + esc(s.sales_name) + '</a>';
+        return '<tr><td>' + link + '</td><td class="num">' + (s.sales_name === NONE ? '-' : n(s.in_list)) + '</td><td class="num">' + n(s.invited) + '</td><td class="num">' + n(s.registered) + '</td><td class="num">' + n(s.attended) + '</td><td class="num">' + pct + '</td></tr>';
+      }).join('') : '<tr><td colspan="6" class="muted">ยังไม่มีข้อมูล</td></tr>';
+
+      const stores = d.store_summary || [];
+      const storeRow = function (s, full) {
+        return '<tr><td>' + esc(s.name) + '</td>' + (full ? '<td class="num">' + n(s.in_list) + '</td>' : '') +
+          '<td class="num">' + n(s.invited) + '</td><td class="num">' + n(s.registered) + '</td><td class="num">' + n(s.attended) + '</td></tr>';
+      };
+      $('#storeBody').innerHTML = stores.length ? stores.map(function (s) { return storeRow(s, true); }).join('') : '<tr><td colspan="5" class="muted">ยังไม่มีข้อมูล นำเข้ารายชื่อลูกค้าที่เมนู "รายชื่อลูกค้า"</td></tr>';
+      $('#storeTop').innerHTML = stores.length ? stores.slice(0, 10).map(function (s) { return storeRow(s, false); }).join('') : '<tr><td colspan="4" class="muted">ยังไม่มีข้อมูลสาขา</td></tr>';
+
+      const wa = $('#weakAlert');
+      wa.hidden = !d.weak_matches;
+      if (d.weak_matches) wa.innerHTML = 'มีผู้ลงทะเบียน ' + d.weak_matches + ' คนที่จับคู่ Sales จากชื่อ (อาจผิดคน) <a href="#" id="goWeak">ตรวจรายการ</a>';
+    }
+
+    // กดชื่อ Sales ในตารางสรุป ไปดูรายชื่อลูกค้าของคนนั้น
+    $('#salesBody').addEventListener('click', function (e) {
+      const a = e.target.closest('[data-sales]');
+      if (!a) return;
+      e.preventDefault();
+      pendingCustSales = a.dataset.sales;
+      showView('customers');
+    });
+    $('#weakAlert').addEventListener('click', function (e) {
+      if (e.target.id !== 'goWeak') return;
+      e.preventDefault();
+      pendingWeak = true;
+      showView('list');
+    });
+
+    // ---------- เปิด / ปิดรับลงทะเบียน ----------
+    let regSettings = null;
+    async function loadRegSettings() {
+      const r = await authed('settings_get', {});
+      if (!sess || !r.ok) return;
+      regSettings = r;
+      renderRegCtl();
+    }
+    function renderRegCtl() {
+      const r = regSettings;
+      const full = r.registration_open && r.max_capacity && r.count >= r.max_capacity;
+      $('#regDot').className = 'dot-state ' + (!r.registration_open ? 'off' : full ? 'full' : 'on');
+      $('#regState').textContent = !r.registration_open ? 'ปิดรับลงทะเบียนอยู่' : full ? 'เปิดอยู่ แต่ที่นั่งเต็มแล้ว' : 'เปิดรับลงทะเบียนอยู่';
+      $('#regSub').textContent = 'ลงทะเบียนแล้ว ' + r.count + ' / ' + r.max_capacity + ' ที่ · Staff ลงทะเบียนแทนหน้างานได้เสมอ';
+      const t = $('#regToggle');
+      t.disabled = false;
+      t.className = 'btn btn-sm ' + (r.registration_open ? 'open' : 'closed');
+      t.textContent = r.registration_open ? 'ปิดรับลงทะเบียน' : 'เปิดรับลงทะเบียน';
+      $('#regSettings').disabled = false;
+    }
+    $('#regToggle').addEventListener('click', function () {
+      if (!regSettings) return;
+      const toOpen = !regSettings.registration_open;
+      const ov = openSheet('<div class="sheet-head ' + (toOpen ? 'ok' : 'bad') + '">' + (toOpen ? 'เปิดรับลงทะเบียน?' : 'ปิดรับลงทะเบียน?') + '</div>' +
+        '<div class="sheet-body"><p>' + (toOpen ? 'ลิงก์ลงทะเบียนทุกแบบจะกลับมาใช้ได้ทันที' : 'ลิงก์ลงทะเบียนทุกแบบ รวม VVIP / VIP จะลงทะเบียนไม่ได้ หน้าเว็บจะแสดงข้อความ "ปิดรับลงทะเบียนแล้ว" แทน Staff ยังลงทะเบียนแทนหน้างานได้') + '</p></div>' +
+        '<div class="sheet-foot"><button class="btn ' + (toOpen ? 'btn-ok' : 'btn-danger') + ' btn-block" id="doReg">' + (toOpen ? 'ยืนยันเปิดรับ' : 'ยืนยันปิดรับ') + '</button><button class="btn btn-ghost btn-block" data-close>ยกเลิก</button></div>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#doReg', ov).addEventListener('click', async function () {
+        this.disabled = true;
+        const r = await authed('settings_update', { fields: { registration_open: toOpen } });
+        closeSheet();
+        if (!r.ok) { toast(r.error, true); return; }
+        regSettings = r; renderRegCtl(); loadDashboard();
+        toast(toOpen ? 'เปิดรับลงทะเบียนแล้ว' : 'ปิดรับลงทะเบียนแล้ว');
+      });
+    });
+    $('#regSettings').addEventListener('click', function () {
+      const r = regSettings || {};
+      const ov = openSheet('<div class="sheet-head plain">จำนวนรับ และข้อความบนหน้าลงทะเบียน</div>' +
+        '<form class="sheet-body" id="regForm2">' +
+          '<div id="rsErr" class="alert" hidden></div>' +
+          '<div class="field"><label>จำนวนรับสูงสุด (ครบแล้วปิดรับเอง)</label><input type="text" inputmode="numeric" name="max_capacity" value="' + esc(r.max_capacity) + '"></div>' +
+          '<div class="field"><label>หัวข้อ เมื่อที่นั่งเต็ม</label><input type="text" name="msg_full_title" value="' + esc(r.msg_full_title) + '"></div>' +
+          '<div class="field"><label>ข้อความ เมื่อที่นั่งเต็ม <span class="opt">(ขึ้นบรรทัดใหม่ได้ บรรทัดภาษาอังกฤษจะแสดงเป็นตัวเอียง)</span></label><textarea name="msg_full_body" rows="4">' + esc(r.msg_full_body) + '</textarea></div>' +
+          '<div class="field"><label>หัวข้อ เมื่อปิดรับ</label><input type="text" name="msg_closed_title" value="' + esc(r.msg_closed_title) + '"></div>' +
+          '<div class="field"><label>ข้อความ เมื่อปิดรับ</label><textarea name="msg_closed_body" rows="4">' + esc(r.msg_closed_body) + '</textarea></div>' +
+          '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary" id="rsSave">บันทึก</button></div>' +
+        '</form>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#regForm2', ov).addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const f = e.target;
+        const fields = {};
+        ['max_capacity', 'msg_full_title', 'msg_full_body', 'msg_closed_title', 'msg_closed_body'].forEach(function (k) { fields[k] = f[k].value; });
+        const btn = $('#rsSave', ov);
+        btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+        const res = await authed('settings_update', { fields: fields });
+        btn.disabled = false; btn.textContent = 'บันทึก';
+        if (!res.ok) { const eb = $('#rsErr', ov); eb.textContent = res.error; eb.hidden = false; return; }
+        closeSheet();
+        regSettings = res; renderRegCtl(); loadDashboard();
+        toast('บันทึกแล้ว หน้าลงทะเบียนจะเปลี่ยนภายในไม่เกิน 30 วินาที');
+      });
+    });
+
+    // ---------- รายชื่อลูกค้า ----------
+    const baht = function (v) { return Math.round(v || 0).toLocaleString(); };
+
+    async function loadCustomers() {
+      $('#custBody').innerHTML = '<tr><td colspan="8" class="muted">กำลังโหลด...</td></tr>';
+      const r = await authed('customers', {});
+      if (!sess) return;
+      if (!r.ok) { toast(r.error, true); return; }
+      customers = r.customers;
+      const fill = function (sel, label, values) {
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">' + label + '</option>' + values.map(function (v) { return '<option>' + esc(v) + '</option>'; }).join('');
+        sel.value = cur;
+      };
+      const uniq = function (k) { const s = {}; customers.forEach(function (c) { if (c[k]) s[c[k]] = 1; }); return Object.keys(s).sort(); };
+      fill($('#cSales'), 'ทุก Sales', uniq('sales_name'));
+      fill($('#cStore'), 'ทุกสาขา', uniq('store'));
+      if (pendingCustSales) { $('#cSales').value = pendingCustSales; pendingCustSales = ''; }
+      custLimit = 200;
+      renderCustomers();
+    }
+
+    function custFiltered() {
+      const q = $('#cQ').value.trim().toLowerCase();
+      const inv = $('#cInvited').value, tier = $('#cTier').value, st = $('#cStatus').value, sales = $('#cSales').value, store = $('#cStore').value;
+      return customers.filter(function (c) {
+        if (inv === 'yes' && !c.invited) return false;
+        if (inv === 'no' && c.invited) return false;
+        if (tier && tier.indexOf('sug-') === 0) { if (c.suggested_tier !== tier.slice(4)) return false; }
+        else if (tier && c.tier !== tier) return false;
+        if (st && c.status !== st) return false;
+        if (sales && c.sales_name !== sales) return false;
+        if (store && c.store !== store) return false;
+        if (q && [c.customer_name, c.mmid, c.cust_no, c.phone, c.contact_name, c.reg_name].join(' ').toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      }).sort(function (a, b) { return b.spend_3m - a.spend_3m; }); // ยอดซื้อมากไปน้อย
+    }
+
+    function renderCustomers() {
+      const rows = custFiltered();
+      const all = customers;
+      const cnt = function (f) { return all.filter(f).length.toLocaleString(); };
+      $('#custSum').innerHTML = all.length ?
+        '<span>ลูกค้าในรายชื่อ <b>' + all.length.toLocaleString() + '</b></span>' +
+        '<span>เชิญแล้ว <b>' + cnt(function (c) { return c.invited; }) + '</b> (VVIP <b>' + cnt(function (c) { return c.invited && c.tier === 'VVIP'; }) + '</b> / VIP <b>' + cnt(function (c) { return c.invited && c.tier === 'VIP'; }) + '</b>)</span>' +
+        '<span>ลงทะเบียนแล้ว <b>' + cnt(function (c) { return c.status !== 'ยังไม่ลงทะเบียน'; }) + '</b></span>' +
+        '<span>มาแล้ว <b>' + cnt(function (c) { return c.status === 'มาแล้ว'; }) + '</b></span>' : '';
+      $('#cCount').textContent = 'แสดง ' + Math.min(rows.length, custLimit).toLocaleString() + ' จาก ' + rows.length.toLocaleString() + ' รายการที่ตรงเงื่อนไข';
+      if (!all.length) {
+        $('#custBody').innerHTML = '<tr><td colspan="8" class="empty">ยังไม่มีรายชื่อลูกค้า กดปุ่ม "นำเข้าไฟล์ Excel" ด้านบน</td></tr>';
+        $('#custMore').hidden = true;
+        return;
+      }
+      const stCls = { 'ยังไม่ลงทะเบียน': 'st-none', 'ลงทะเบียนแล้ว': 'st-reg', 'มาแล้ว': 'st-in' };
+      $('#custBody').innerHTML = rows.slice(0, custLimit).map(function (c) {
+        return '<tr data-key="' + esc(c.key) + '">' +
+          '<td><input type="checkbox" data-act="invite" aria-label="เชิญ"' + (c.invited ? ' checked' : '') + '></td>' +
+          '<td><select data-act="tier" aria-label="กลุ่ม"><option value="">-</option>' + ['VVIP', 'VIP', 'Walk-in'].map(function (t) {
+            return '<option' + (c.tier === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+            (c.suggested_tier ? '<span class="sug">แนะนำ ' + esc(c.suggested_tier) + '</span>' : '') + '</td>' +
+          '<td><div class="cname">' + esc(c.customer_name) + '</div><div class="muted">MMID ' + esc(c.mmid || '-') + (c.phone ? ' · ' + esc(c.phone) : '') + (c.contact_name ? ' · ' + esc(c.contact_name) : '') + '</div></td>' +
+          '<td>' + esc(c.sales_name || NONE) + '</td>' +
+          '<td>' + esc(c.store || '-') + '</td>' +
+          '<td class="num">' + baht(c.spend_3m) + '</td>' +
+          '<td class="' + stCls[c.status] + '">' + esc(c.status) + (c.reg_name ? '<div class="muted">' + esc(c.reg_name) + '</div>' : '') + '</td>' +
+          '<td><div class="row-actions"><button type="button" data-act="edit">แก้ไข</button></div></td></tr>';
+      }).join('') || '<tr><td colspan="8" class="empty">ไม่พบรายการ</td></tr>';
+      $('#custMore').hidden = rows.length <= custLimit;
+    }
+
+    ['#cQ', '#cInvited', '#cTier', '#cStatus', '#cSales', '#cStore'].forEach(function (s) {
+      $(s).addEventListener('input', function () { custLimit = 200; renderCustomers(); });
+    });
+    $('#custMore').addEventListener('click', function () { custLimit += 300; renderCustomers(); });
+    $('#custReload').addEventListener('click', loadCustomers);
+
+    async function saveCustomer(c, fields, okMsg) {
+      const r = await authed('customer_update', { key: c.key, fields: fields });
+      if (!r.ok) { toast(r.error, true); return false; }
+      Object.assign(c, fields);
+      renderCustomers();
+      if (okMsg) toast(okMsg);
+      return true;
+    }
+
+    $('#custBody').addEventListener('change', function (e) {
+      const el = e.target.closest('[data-act]');
+      if (!el) return;
+      const c = customers.find(function (x) { return x.key === el.closest('tr').dataset.key; });
+      if (!c) return;
+      if (el.dataset.act === 'invite') {
+        const fields = { invited: el.checked };
+        if (el.checked && !c.tier) fields.tier = c.suggested_tier || 'VIP';
+        saveCustomer(c, fields, el.checked ? 'เชิญแล้ว' : 'ยกเลิกเชิญแล้ว');
+      }
+      if (el.dataset.act === 'tier') saveCustomer(c, { tier: el.value }, 'เปลี่ยนกลุ่มแล้ว');
+    });
+
+    $('#custBody').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-act="edit"]');
+      if (!b) return;
+      const c = customers.find(function (x) { return x.key === b.closest('tr').dataset.key; });
+      if (!c) return;
+      const names = allSalesNames();
+      if (c.sales_name && names.indexOf(c.sales_name) === -1) names.push(c.sales_name);
+      const ov = openSheet('<div class="sheet-head plain">' + esc(c.customer_name) + '<small>MMID ' + esc(c.mmid || '-') + ' · เลขลูกค้า ' + esc(c.cust_no || '-') + ' · ' + esc(c.store || '') + '</small></div>' +
+        '<form class="sheet-body" id="cEdit"><div id="cErr" class="alert" hidden></div>' +
+        '<div class="field"><label>เบอร์มือถือ <span class="opt">(ช่วยจับคู่เมื่อลูกค้าไม่กรอก MMID)</span></label><input type="tel" name="phone" maxlength="12" value="' + esc(c.phone) + '"></div>' +
+        '<div class="field"><label>ชื่อผู้ติดต่อที่จะมางาน</label><input type="text" name="contact_name" maxlength="100" value="' + esc(c.contact_name) + '"></div>' +
+        '<div class="field"><label>Sales ที่ดูแล</label><select name="sales_name"><option value="">' + NONE + '</option>' + names.map(function (n) {
+          return '<option' + (n === c.sales_name ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field"><label>หมายเหตุ</label><textarea name="note" maxlength="300">' + esc(c.note) + '</textarea></div>' +
+        '<p class="muted">ยอดซื้อ 3 เดือน ' + baht(c.spend_3m) + ' บาท · ประเภท ' + esc(c.customer_type || '-') + '</p>' +
+        '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary">บันทึก</button></div></form>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#cEdit', ov).addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        const f = ev.target;
+        const fields = {};
+        ['phone', 'contact_name', 'sales_name', 'note'].forEach(function (k) {
+          const v = f[k].value.trim();
+          if (v !== String(c[k] || '')) fields[k] = k === 'phone' ? cleanPhone(v) : v;
+        });
+        if (!Object.keys(fields).length) { closeSheet(); return; }
+        const r = await authed('customer_update', { key: c.key, fields: fields });
+        if (!r.ok) { const eb = $('#cErr', ov); eb.textContent = r.error; eb.hidden = false; return; }
+        Object.assign(c, fields);
+        closeSheet(); renderCustomers();
+        toast('บันทึกแล้ว ถ้าแก้ Sales หรือเบอร์ กด "Match ใหม่" ที่หน้าผู้ลงทะเบียน เพื่ออัปเดตคนที่ลงทะเบียนไปแล้ว');
+      });
+    });
+
+    $('#applySuggested').addEventListener('click', function () {
+      const n = customers.filter(function (c) { return !c.invited && (c.suggested_tier === 'VVIP' || c.suggested_tier === 'VIP'); }).length;
+      const ov = openSheet('<div class="sheet-head plain">เชิญตามกลุ่มที่แนะนำ</div><div class="sheet-body"><p>ระบบจะตั้งให้ลูกค้าที่ระบบแนะนำเป็น VVIP / VIP (จากยอดซื้อ) เป็น "เชิญ" และใช้กลุ่มตามที่แนะนำ รวม <b>' + n.toLocaleString() + '</b> ราย ลูกค้าที่ตั้งค่าไว้แล้วจะไม่ถูกเปลี่ยน</p></div>' +
+        '<div class="sheet-foot"><button class="btn btn-primary btn-block" id="doSug"' + (n ? '' : ' disabled') + '>ยืนยัน</button><button class="btn btn-ghost btn-block" data-close>ยกเลิก</button></div>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#doSug', ov).addEventListener('click', async function () {
+        this.disabled = true; this.innerHTML = 'กำลังบันทึก <span class="spinner"></span>';
+        const r = await authed('customers_bulk', { apply_suggested: true });
+        closeSheet();
+        if (!r.ok) { toast(r.error, true); return; }
+        toast('เชิญแล้ว ' + r.changed + ' ราย');
+        loadCustomers();
+      });
+    });
+
+    $('#bulkInvite').addEventListener('click', function () {
+      const rows = custFiltered();
+      const ov = openSheet('<div class="sheet-head plain">ตั้งค่ารายการที่กรองอยู่ (' + rows.length.toLocaleString() + ' ราย)</div>' +
+        '<form class="sheet-body" id="bulkF"><div class="field"><label>การเชิญ</label><select name="invited"><option value="yes">เชิญ</option><option value="no">ยกเลิกเชิญ</option></select></div>' +
+        '<div class="field"><label>กลุ่ม</label><select name="tier"><option value="">ไม่เปลี่ยน</option><option>VVIP</option><option>VIP</option><option>Walk-in</option></select></div>' +
+        '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary"' + (rows.length ? '' : ' disabled') + '>ยืนยัน</button></div></form>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#bulkF', ov).addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const fields = { invited: e.target.invited.value === 'yes' };
+        if (e.target.tier.value) fields.tier = e.target.tier.value;
+        const r = await authed('customers_bulk', { keys: rows.map(function (c) { return c.key; }), fields: fields });
+        closeSheet();
+        if (!r.ok) { toast(r.error, true); return; }
+        toast('อัปเดตแล้ว ' + r.changed + ' ราย');
+        loadCustomers();
+      });
+    });
+
+    $('#custExport').addEventListener('click', function () {
+      const rows = custFiltered();
+      const cols = ['customer_name', 'mmid', 'cust_no', 'customer_type', 'phone', 'contact_name', 'sales_name', 'store', 'region', 'spend_3m', 'suggested_tier', 'invited', 'tier', 'status', 'reg_name', 'note'];
+      downloadCsv('customers', cols, rows.map(function (c) { return Object.assign({}, c, { invited: c.invited ? 'เชิญ' : '' }); }), ['mmid', 'cust_no', 'phone']);
+    });
+
+    function downloadCsv(name, cols, rows, textCols) {
+      const cell = function (v, asText) {
+        const s = String(v == null ? '' : v);
+        if (asText && s) return '="' + s.replace(/"/g, '""') + '"';
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const lines = [cols.join(',')].concat(rows.map(function (r) {
+        return cols.map(function (c) { return cell(r[c], textCols.indexOf(c) !== -1); }).join(',');
+      }));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+      const d = new Date();
+      a.download = name + '-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + '.csv';
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    }
+
+    // ---------- นำเข้าไฟล์ Excel ----------
+    const val = function (v) { return v == null ? '' : String(v).trim(); };
+
+    function customerType(name) {
+      const n = String(name || '');
+      if (/^(บจ\.?|บริษัท|บมจ|บจก)/.test(n) || /จำกัด|co\.?,?\s*ltd/i.test(n)) return 'บริษัท';
+      if (/^(หจ\.?ก\.?|หจก|ห้างหุ้นส่วน)/.test(n)) return 'หจก.';
+      if (/^ร้าน/.test(n)) return 'ร้าน';
+      if (/(สหกรณ์|มูลนิธิ|โรงแรม|รีสอร์ท|สมาคม)/.test(n)) return 'นิติบุคคลอื่น';
+      if (/\S\s+\S/.test(n.trim())) return 'บุคคล';
+      return 'อื่นๆ';
+    }
+
+    // อ่านไฟล์ หาแท็บและแถวหัวตารางที่มีคอลัมน์ MMID แล้วจับคอลัมน์จากชื่อหัวตาราง
+    function parseWorkbook(wb) {
+      const names = wb.SheetNames.slice().sort(function (a, b) { return (b === 'Export') - (a === 'Export'); });
+      for (let i = 0; i < names.length; i++) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[names[i]], { header: 1, raw: true, defval: '' });
+        const hi = rows.findIndex(function (r, j) { return j < 30 && r.some(function (c) { return /^mmid$/i.test(val(c)); }); });
+        if (hi === -1) continue;
+        const h = rows[hi].map(function (c) { return val(c); });
+        const find = function (exact, re) {
+          let i2 = h.findIndex(function (x) { return exact.indexOf(x.toLowerCase()) !== -1; });
+          if (i2 === -1 && re) i2 = h.findIndex(function (x) { return re.test(x); });
+          return i2;
+        };
+        const col = {
+          mmid: find(['mmid']),
+          custnumname: find(['cust num name']),
+          custno: find(['cust num', 'customer no', 'เลขลูกค้า'], /เลขลูกค้า|cust(omer)?\s*(no|num)\b/i),
+          name: find(['customer name', 'ชื่อลูกค้า', 'ชื่อร้าน'], /ชื่อลูกค้า|ชื่อร้าน|customer\s*name|บริษัท/i),
+          phone: find([], /เบอร์|phone|mobile|^tel/i),
+          contact: find([], /ผู้ติดต่อ|contact/i),
+          salesman: find(['salesman code name', 'sales name', 'sales', 'ชื่อ sales', 'เซลส์'], /^(?!.*(store|excl|amount|ยอด|qty)).*(salesman|sales\s*name|^sales$|เซลส์|ชื่อ\s*sales)/i),
+          store: find(['store salesman', 'store', 'สาขา', 'select store'], /สาขา|^store/i),
+          region: find(['region', 'ภาค'], /region|ภาค/i),
+          spend: find(['salesexcl cy', 'ยอดซื้อ', 'spend'], /salesexcl\s*cy|ยอด|amount|spend/i),
+          tier: find(['tier', 'กลุ่ม'], /tier|กลุ่ม|vvip/i),
+          invited: find(['invited', 'เชิญ'], /เชิญ|invite/i),
+          product: find(['prod num name'], /prod/i)
+        };
+        return { sheet: names[i], header: h, col: col, rows: rows.slice(hi + 1) };
+      }
+      return null;
+    }
+
+    // รวมหลายแถวต่อลูกค้า (ไฟล์ยอดขายรายบิล) เหลือ 1 แถวต่อ MMID: รวมยอด เลือก Sales ที่มียอดสูงสุด
+    function aggregate(p) {
+      const c = p.col;
+      const map = {};
+      let rowsRead = 0;
+      p.rows.forEach(function (r) {
+        const mmid = val(r[c.mmid]).replace(/\s/g, '');
+        if (!mmid) return;
+        rowsRead++;
+        const key = mmid.replace(/^0+/, '');
+        const o = map[key] || (map[key] = { mmid: mmid, cust_no: '', customer_name: '', phone: '', contact_name: '', store: '', region: '', spend_3m: 0, salesSpend: {}, salesCode: {}, tier: '', invited: '' });
+        if (c.custnumname !== -1) {
+          const m = /^(\d+)_(.*)$/.exec(val(r[c.custnumname]));
+          if (m) { o.cust_no = m[1]; o.customer_name = m[2].trim(); }
+          else if (val(r[c.custnumname])) o.customer_name = val(r[c.custnumname]);
+        }
+        if (c.custno !== -1 && c.custno !== c.custnumname && val(r[c.custno])) o.cust_no = val(r[c.custno]).split('_')[0];
+        if (c.name !== -1 && c.name !== c.custnumname && val(r[c.name])) o.customer_name = val(r[c.name]);
+        if (c.phone !== -1 && val(r[c.phone])) o.phone = val(r[c.phone]);
+        if (c.contact !== -1 && val(r[c.contact])) o.contact_name = val(r[c.contact]);
+        if (c.store !== -1 && val(r[c.store])) o.store = val(r[c.store]);
+        if (c.region !== -1 && val(r[c.region])) o.region = val(r[c.region]);
+        const amt = c.spend !== -1 ? Number(r[c.spend]) || 0 : 0;
+        o.spend_3m += amt;
+        if (c.salesman !== -1 && val(r[c.salesman])) {
+          const raw = val(r[c.salesman]);
+          const m = /^(\d+)-(.+)$/.exec(raw); // รหัสพนักงาน-ชื่อ
+          const dup = /^(.+)-\1$/.exec(raw);    // ตำแหน่งว่าง เช่น VACANT0018-VACANT0018 เหลือ VACANT0018
+          const nm = m ? m[2].trim() : dup ? dup[1] : raw;
+          o.salesSpend[nm] = (o.salesSpend[nm] || 0) + amt + 0.0001;
+          if (m) o.salesCode[nm] = m[1];
+        }
+        if (c.tier !== -1) { const t = val(r[c.tier]).toUpperCase(); if (t === 'VVIP' || t === 'VIP') o.tier = t; }
+        if (c.invited !== -1 && val(r[c.invited])) o.invited = /^(y|yes|true|1|เชิญ|ใช่|✓)/i.test(val(r[c.invited]));
+      });
+      const list = Object.keys(map).map(function (k) {
+        const o = map[k];
+        const best = Object.keys(o.salesSpend).sort(function (a, b) { return o.salesSpend[b] - o.salesSpend[a]; })[0] || '';
+        return {
+          mmid: o.mmid, cust_no: o.cust_no, customer_name: o.customer_name || o.mmid, customer_type: customerType(o.customer_name),
+          phone: o.phone, contact_name: o.contact_name, sales_name: best, sales_code: o.salesCode[best] || '',
+          store: o.store, region: o.region, spend_3m: Math.round(o.spend_3m * 100) / 100,
+          tier: o.tier, invited: o.tier ? true : o.invited, multiSales: Object.keys(o.salesSpend).length > 1
+        };
+      });
+      return { rowsRead: rowsRead, list: list };
+    }
+
+    $('#importFile').addEventListener('change', function () {
+      const file = this.files[0];
+      this.value = '';
+      if (!file) return;
+      if (!window.XLSX) { toast('ตัวอ่านไฟล์ Excel ยังโหลดไม่เสร็จ กรุณาลองใหม่อีกครั้ง', true); return; }
+      const reader = new FileReader();
+      openSheet('<div class="sheet-head plain">กำลังอ่านไฟล์ <span class="spinner"></span><small>' + esc(file.name) + '</small></div><div class="sheet-body"><p class="muted">ไฟล์ใหญ่อาจใช้เวลาสักครู่</p></div>');
+      reader.onload = function () {
+        setTimeout(function () {
+          let p, agg;
+          try {
+            const wb = XLSX.read(reader.result, { type: 'array' });
+            p = parseWorkbook(wb);
+            if (p) agg = aggregate(p);
+          } catch (err) {
+            closeSheet(); toast('อ่านไฟล์ไม่ได้ กรุณาตรวจว่าเป็นไฟล์ Excel หรือ CSV', true); return;
+          }
+          if (!p || !agg.list.length) { closeSheet(); toast('ไม่พบคอลัมน์ MMID ในไฟล์ กรุณาตรวจหัวตาราง', true); return; }
+          showImportPreview(file.name, p, agg);
+        }, 30);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function showImportPreview(fileName, p, agg) {
+      const list = agg.list;
+      const sales = {}, stores = {};
+      list.forEach(function (c) { if (c.sales_name) sales[c.sales_name] = 1; if (c.store) stores[c.store] = 1; });
+      const withPhone = list.filter(function (c) { return c.phone; }).length;
+      const hasSpend = p.col.spend !== -1;
+      const found = Object.keys(p.col).filter(function (k) { return p.col[k] !== -1; }).length;
+      const ov = openSheet('<div class="sheet-head plain">ตรวจก่อนนำเข้า<small>' + esc(fileName) + ' · แท็บ ' + esc(p.sheet) + '</small></div>' +
+        '<div class="sheet-body">' +
+          '<div class="imp-stats">' +
+            '<span>แถวที่อ่าน <b>' + agg.rowsRead.toLocaleString() + '</b></span><span>ลูกค้า (ตาม MMID) <b>' + list.length.toLocaleString() + '</b></span>' +
+            '<span>Sales <b>' + Object.keys(sales).length + '</b> คน</span><span>สาขา <b>' + Object.keys(stores).length + '</b></span>' +
+            '<span>มีเบอร์โทร <b>' + withPhone.toLocaleString() + '</b> ราย</span><span>มี Sales หลายคน <b>' + list.filter(function (c) { return c.multiSales; }).length + '</b> ราย</span>' +
+          '</div>' +
+          (hasSpend ? '<div class="imp-tiers">แนะนำกลุ่มจากยอดซื้อ: ยอดสูงสุด <input id="nVVIP" type="number" min="0" value="100"> รายแรก = VVIP ถัดไป <input id="nVIP" type="number" min="0" value="500"> ราย = VIP</div>' +
+            '<p class="muted" style="font-size:13px">ลูกค้าที่มี Sales หลายคน ระบบเลือก Sales ที่มียอดขายให้ลูกค้ารายนั้นสูงสุด</p>' : '<p class="muted">ไฟล์นี้ไม่มีคอลัมน์ยอดซื้อ ระบบจะไม่แนะนำกลุ่ม</p>') +
+          '<p class="muted" style="font-size:13px">จับคอลัมน์ได้ ' + found + ' คอลัมน์ · นำเข้าซ้ำได้ ลูกค้าเดิมจะอัปเดต การตั้งค่า เชิญ/กลุ่ม/เบอร์/หมายเหตุที่มีอยู่ไม่หาย</p>' +
+          '<div id="impErr" class="alert" hidden></div>' +
+        '</div>' +
+        '<div class="sheet-foot"><button class="btn btn-primary btn-block" id="doImport">นำเข้า ' + list.length.toLocaleString() + ' ราย</button><button class="btn btn-ghost btn-block" data-close>ยกเลิก</button></div>');
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#doImport', ov).addEventListener('click', async function () {
+        const btn = this;
+        if (hasSpend) {
+          const nV = Math.max(0, Number($('#nVVIP', ov).value) || 0), nP = Math.max(0, Number($('#nVIP', ov).value) || 0);
+          list.slice().sort(function (a, b) { return b.spend_3m - a.spend_3m; }).forEach(function (c, i) {
+            c.suggested_tier = i < nV ? 'VVIP' : i < nV + nP ? 'VIP' : '';
+          });
+        }
+        btn.disabled = true; btn.innerHTML = 'กำลังนำเข้า <span class="spinner"></span>';
+        const rows = list.map(function (c) { const o = Object.assign({}, c); delete o.multiSales; return o; });
+        const r = await authed('customers_import', { rows: rows });
+        if (!r.ok) { btn.disabled = false; btn.textContent = 'ลองอีกครั้ง'; const eb = $('#impErr', ov); eb.textContent = r.error; eb.hidden = false; return; }
+        btn.innerHTML = 'จับคู่ผู้ลงทะเบียนกับรายชื่อ <span class="spinner"></span>';
+        const m = await authed('rematch', {});
+        closeSheet();
+        toast('นำเข้าแล้ว: เพิ่ม ' + r.added + ' / อัปเดต ' + r.updated + ' ราย' + (m.ok ? ' · จับคู่ผู้ลงทะเบียนได้ ' + m.matched + ' คน' : ''));
+        loadSalesNames();
+        loadCustomers();
+      });
     }
 
     // ---------- Links ----------
@@ -423,6 +970,7 @@
       if (!res.ok) { toast(res.error, true); return; }
       records = res.records;
       fillSalesFilter();
+      if (pendingWeak) { $('#fSales').value = '__weak'; pendingWeak = false; }
       renderList();
     }
 
@@ -441,7 +989,7 @@
     function fillSalesFilter() {
       const sel = $('#fSales');
       const cur = sel.value;
-      sel.innerHTML = '<option value="">ทุก Sales</option><option value="__none">' + NONE + '</option>' +
+      sel.innerHTML = '<option value="">ทุก Sales</option><option value="__none">' + NONE + '</option><option value="__weak">จับคู่จากชื่อ (ควรตรวจ)</option>' +
         allSalesNames().map(function (n) { return '<option>' + esc(n) + '</option>'; }).join('');
       sel.value = cur;
     }
@@ -454,9 +1002,10 @@
         if (tier && r.tier !== tier) return false;
         if (src && r.source !== src) return false;
         if (sales === '__none' && r.sales_name) return false;
-        if (sales && sales !== '__none' && r.sales_name !== sales) return false;
+        if (sales === '__weak' && WEAK.indexOf(r.match_method) === -1) return false;
+        if (sales && sales.indexOf('__') !== 0 && r.sales_name !== sales) return false;
         if (q) {
-          const hay = [r.full_name, r.phone, r.mmid, r.company, r.reg_id, r.short_code, r.sales_name].join(' ').toLowerCase();
+          const hay = [r.full_name, r.phone, r.mmid, r.company, r.reg_id, r.short_code, r.sales_name, r.customer_name, r.cust_no].join(' ').toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
         return true;
@@ -473,7 +1022,10 @@
           '<td data-l="เบอร์">' + esc(r.phone) + '</td>' +
           '<td data-l="MMID">' + esc(r.mmid || '-') + '</td>' +
           '<td data-l="ร้าน">' + esc(r.company || '-') + '</td>' +
-          '<td data-l="Sales">' + esc(r.sales_name || NONE) + (r.match_method === 'manual' ? ' <span class="muted">(เลือกเอง)</span>' : '') + '</td>' +
+          '<td data-l="Sales">' + esc(r.sales_name || NONE) +
+            (r.match_method === 'manual' ? ' <span class="muted">(เลือกเอง)</span>' : '') +
+            (WEAK.indexOf(r.match_method) !== -1 ? '<span class="weak" title="จับคู่จากชื่อ อาจผิดคน กดแก้ไขเพื่อเลือก Sales ให้ถูกต้อง">ควรตรวจ</span>' : '') +
+            (r.customer_name ? '<div class="muted">' + esc(r.customer_name) + (r.store ? ' · ' + esc(r.store) : '') + '</div>' : '') + '</td>' +
           '<td><span class="badge badge-src">' + esc(r.source) + '</span></td>' +
           '<td>' + statusBadge(r.status) + (r.status === 'มาแล้ว' ? '<div class="muted">' + esc(r.checked_in_at) + ' · ' + esc(r.checked_in_by) + '</div>' : '') + '</td>' +
           '<td><div class="row-actions">' +
@@ -607,7 +1159,7 @@
       const rows = filtered();
       const cols = [
         ['reg_id', 'reg_id'], ['short_code', 'short_code'], ['created_at', 'created_at'], ['tier', 'tier'], ['source', 'source'], ['full_name', 'full_name'],
-        ['phone', 'phone'], ['mmid', 'mmid'], ['company', 'company'], ['sales_name', 'sales_name'],
+        ['phone', 'phone'], ['mmid', 'mmid'], ['company', 'company'], ['cust_no', 'cust_no'], ['customer_name', 'customer_name'], ['store', 'store'], ['sales_name', 'sales_name'],
         ['match_method', 'match_method'], ['status', 'status'], ['checked_in_at_full', 'checked_in_at'],
         ['checked_in_by', 'checked_in_by'], ['note', 'note']
       ];

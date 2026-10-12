@@ -32,9 +32,15 @@
           <span>เวลา <b id="eventTime">-</b></span>
           <span>สถานที่ <b id="eventVenue">Cape Dara Resort Pattaya</b></span>
         </div>
-        <div class="actions">
+        <div class="actions" id="openActions">
           <a href="#register" class="btn btn-primary btn-block" id="ctaRegister">ลงทะเบียนเข้าร่วมงาน</a>
           <a href="myqr.html" class="btn btn-outline btn-block">ลงทะเบียนแล้ว ดู QR อีกครั้ง</a>
+        </div>
+        <!-- แสดงแทนฟอร์มเมื่อที่นั่งเต็มหรือปิดรับ (ข้อความแก้ได้จากหลังบ้าน) -->
+        <div class="closed-panel" id="closedPanel" hidden>
+          <h2 id="closedTitle"></h2>
+          <div id="closedBody"></div>
+          <a href="myqr.html" class="btn btn-primary btn-block">ดู QR ของฉัน</a>
         </div>
         <p class="notice">งานนี้สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น กรุณาแสดงบัตรประชาชนที่หน้างาน</p>
       </section>
@@ -132,13 +138,28 @@
       }
 
       if (!cfg.registration_open) {
-        showClosed(cfg.closed_reason + ' หากลงทะเบียนไว้แล้ว สามารถดู QR ได้จากปุ่ม "ดู QR อีกครั้ง"');
-        document.getElementById('ctaRegister').hidden = true;
+        showClosedPanel(cfg);
         return;
       }
       document.getElementById('regForm').hidden = false;
       if (isWalkin) document.getElementById('register').scrollIntoView();
     })();
+
+    // ที่นั่งเต็ม / ปิดรับ: ซ่อนฟอร์ม แสดงข้อความจากหลังบ้าน บรรทัดภาษาอังกฤษ (ไม่มีอักษรไทย) แสดงเป็นตัวเอียง
+    function showClosedPanel(cfg) {
+      document.getElementById('openActions').hidden = true;
+      document.getElementById('register').hidden = true;
+      document.getElementById('closedTitle').textContent = cfg.closed_title || cfg.closed_reason || 'ปิดรับลงทะเบียนแล้ว';
+      const body = document.getElementById('closedBody');
+      body.textContent = '';
+      String(cfg.closed_body || '').split('\n').filter(function (l) { return l.trim(); }).forEach(function (line) {
+        const p = document.createElement('p');
+        p.textContent = line.trim();
+        if (!/[฀-๿]/.test(line)) p.className = 'en';
+        body.appendChild(p);
+      });
+      document.getElementById('closedPanel').hidden = false;
+    }
 
     function showClosed(msg) {
       const box = document.getElementById('closedBox');

@@ -88,12 +88,18 @@ body.app { min-height: 100vh; }
 .sheet-body { padding: 16px 20px; }
 .sheet-foot { padding: 0 20px; display: grid; gap: 10px; }
 
+/* แถบ wristband ใช้สีเดียวกับสายรัดข้อมือจริง */
 .wristband {
-  display: flex; align-items: baseline; justify-content: center; gap: 10px;
-  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
-  font-size: 28px; font-weight: 600; letter-spacing: .08em; line-height: 1.2;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  border-radius: 10px; padding: 8px 16px; margin-bottom: 14px; line-height: 1.15;
 }
-.wristband small { font-size: 13px; font-weight: 400; letter-spacing: .04em; opacity: .8; }
+.wristband .letter { font-family: var(--display); font-size: 52px; font-weight: 600; line-height: 1; }
+.wristband .what { display: grid; font-size: 24px; font-weight: 600; letter-spacing: .06em; }
+.wristband small { font-size: 13px; font-weight: 500; letter-spacing: .02em; opacity: .85; }
+.band-VVIP { background: #c9a24a; color: #151412; }
+.band-VIP { background: #e31e24; color: #ffffff; }
+.band-Walk-in { background: #8ec5e8; color: #151412; }
+.makro-name { margin: -6px 0 10px; color: var(--muted); font-size: 14px; }
 .person-name { font-size: 22px; font-weight: 600; margin: 0 0 10px; line-height: 1.35; }
 .kv { display: grid; grid-template-columns: 96px 1fr; gap: 6px 12px; font-size: 15px; }
 .kv dt { color: var(--muted); }

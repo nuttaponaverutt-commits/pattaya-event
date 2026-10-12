@@ -33,7 +33,14 @@ const ADMIN_ACTIONS = {
   links: apiLinks_,
   draw: apiDraw_,
   draw_list: apiDrawList_,
-  draw_void: apiDrawVoid_
+  draw_void: apiDrawVoid_,
+  // อยู่ใน Customers.gs เรียกผ่านฟังก์ชันห่อ เพื่อไม่ขึ้นกับลำดับการโหลดไฟล์
+  customers: function (req, sess) { return apiCustomers_(req, sess); },
+  customers_import: function (req, sess) { return apiCustomersImport_(req, sess); },
+  customer_update: function (req, sess) { return apiCustomerUpdate_(req, sess); },
+  customers_bulk: function (req, sess) { return apiCustomersBulk_(req, sess); },
+  settings_get: function (req, sess) { return apiSettingsGet_(req, sess); },
+  settings_update: function (req, sess) { return apiSettingsUpdate_(req, sess); }
 };
 
 function doPost(e) {
@@ -81,7 +88,10 @@ function apiConfig_(req) {
     event_venue: String(s.event_venue || ''),
     tier: tier,
     registration_open: state.open,
-    closed_reason: state.reason
+    closed_reason: state.reason,
+    closed_kind: state.kind || '',
+    closed_title: state.kind ? String(s['msg_' + state.kind + '_title'] || state.reason) : '',
+    closed_body: state.kind ? String(s['msg_' + state.kind + '_body'] || '') : ''
   };
   cachePut_('cfg_' + tier, JSON.stringify(out), 20);
   if (CACHE_ERR) out.cache_error = CACHE_ERR;
@@ -188,16 +198,12 @@ function apiDashboard_() {
   const t = readRegs_();
   const recs = t.records;
   const s = getSettings_();
-  const idx = salesIndex_(s);
 
   const bySource = { 'Online': 0, 'Walk-in': 0, 'Staff': 0 };
   const targets = { 'VVIP': s.target_vvip, 'VIP': s.target_vip, 'Walk-in': s.target_walkin };
   const byTier = {};
   TIERS.forEach(function (t) { byTier[t] = { registered: 0, attended: 0, target: Number(targets[t]) || 0 }; });
-  const salesMap = {};
-  idx.names.forEach(function (n) { salesMap[n] = { sales_name: n, in_list: idx.counts[n], registered: 0, attended: 0 }; });
-  const NONE = 'ไม่มี Sales';
-  let attended = 0;
+  let attended = 0, weak = 0;
 
   recs.forEach(function (r) {
     if (bySource[r.source] !== undefined) bySource[r.source]++;
@@ -206,11 +212,9 @@ function apiDashboard_() {
     const t = byTier[r.tier] || byTier['Walk-in'];
     t.registered++;
     if (isIn) t.attended++;
-    const name = r.sales_name || NONE;
-    if (!salesMap[name]) salesMap[name] = { sales_name: name, in_list: 0, registered: 0, attended: 0 };
-    salesMap[name].registered++;
-    if (isIn) salesMap[name].attended++;
+    if (WEAK_MATCH.indexOf(r.match_method) !== -1) weak++;
   });
+  const sum = salesAndStoreSummary_(recs);
 
   const recent = recs
     .filter(function (r) { return r.status === STATUS_IN && r.checked_in_at instanceof Date; })
@@ -228,8 +232,10 @@ function apiDashboard_() {
     by_source: bySource,
     by_tier: byTier,
     recent: recent,
-    sales_summary: Object.keys(salesMap).map(function (k) { return salesMap[k]; })
-      .sort(function (a, b) { return (a.sales_name === NONE) - (b.sales_name === NONE) || b.registered - a.registered; }),
+    sales_summary: sum.sales.map(function (x) { return Object.assign({ sales_name: x.name }, x); }),
+    store_summary: sum.stores,
+    has_customers: sum.has_customers,
+    weak_matches: weak,
     max_capacity: Number(s.max_capacity) || 0,
     registration_open: onlineState_(s, total).open,
     sheet_url: SpreadsheetApp.getActive().getUrl(),
@@ -304,32 +310,35 @@ function apiDelete_(req) {
   });
 }
 
-// match ย้อนหลังเฉพาะแถวที่ยังไม่มี Sales และไม่ใช่ manual
+// จับคู่ใหม่ทุกรายการกับรายชื่อลูกค้าล่าสุด ยกเว้นรายการที่ Admin เลือก Sales เอง (manual)
 function apiRematch_() {
+  const idx = customerIndex_();
+  if (!idx.ready && !salesIndex_(getSettings_()).ready) fail_('ยังไม่มีรายชื่อลูกค้า กรุณานำเข้ารายชื่อที่เมนู "รายชื่อลูกค้า" ก่อน');
   return withLock_(function () {
-    const s = getSettings_();
-    const idx = salesIndex_(s);
-    if (!idx.ready) fail_('ยังตั้งค่าชื่อคอลัมน์ Sales ใน Settings ไม่ครบ หรือ Sales_List ยังว่าง');
     const t = readRegs_();
-    let matched = 0;
-    let checked = 0;
+    let matched = 0, checked = 0, weak = 0;
     t.records.forEach(function (r) {
-      if (r.match_method === 'manual' || r.sales_name) return;
+      if (r.match_method === 'manual') return;
       checked++;
-      const m = matchSales_(idx, r.mmid, r.phone);
-      if (m.sales_name) {
-        writeFields_(t, r, m);
-        matched++;
-      } else if (r.match_method !== 'none') {
-        writeFields_(t, r, { match_method: 'none' });
-      }
+      const m = matchCustomer_(idx, r);
+      const upd = {};
+      ['sales_name', 'match_method', 'cust_no', 'customer_name', 'store'].forEach(function (k) {
+        if (String(r[k] || '') !== String(m[k] || '')) upd[k] = m[k] || '';
+      });
+      if (m.cust_tier && higherTier_(r.tier, m.cust_tier) !== r.tier) upd.tier = m.cust_tier;
+      if (Object.keys(upd).length) writeFields_(t, r, upd);
+      if (m.sales_name) matched++;
+      if (WEAK_MATCH.indexOf(m.match_method) !== -1) weak++;
     });
-    return { ok: true, checked: checked, matched: matched };
+    return { ok: true, checked: checked, matched: matched, weak: weak };
   });
 }
 
 function apiSalesNames_() {
-  return { ok: true, names: salesIndex_(getSettings_()).names };
+  const set = {};
+  customerIndex_().rows.forEach(function (r) { if (r.sales_name) set[r.sales_name] = 1; });
+  salesIndex_(getSettings_()).names.forEach(function (n) { set[n] = 1; });
+  return { ok: true, names: Object.keys(set).sort() };
 }
 
 // รหัสลิงก์เชิญของแต่ละกลุ่ม ให้หน้า Admin สร้างลิงก์
@@ -414,7 +423,15 @@ function tierFromCode_(s, code) {
 // งานที่ไม่ต้องล็อก (อ่าน Settings และรายชื่อ Sales) ทำก่อนเข้าคิว ให้แต่ละคนถือล็อกสั้นที่สุด
 function prepareRegistration_(f) {
   const s = getSettings_();
-  return { s: s, match: matchSales_(salesIndex_(s), f.mmid, f.phone) };
+  return { s: s, match: matchCustomer_(customerIndex_(), f) };
+}
+
+// กลุ่มที่สูงกว่า (VVIP > VIP > Walk-in)
+function higherTier_(a, b) {
+  const ia = TIERS.indexOf(a), ib = TIERS.indexOf(b);
+  if (ia === -1) return ib === -1 ? 'Walk-in' : b;
+  if (ib === -1) return a;
+  return ia <= ib ? a : b;
 }
 
 function createRegistration_(f, source, tier, pre) {
@@ -453,7 +470,11 @@ function createRegistration_(f, source, tier, pre) {
     checked_in_at: '',
     checked_in_by: '',
     note: '',
-    tier: TIERS.indexOf(tier) !== -1 ? tier : 'Walk-in'
+    // ลูกค้าที่อยู่ในรายชื่อเชิญ ได้กลุ่มตามรายชื่อ ถ้าสูงกว่ากลุ่มของลิงก์
+    tier: higherTier_(tier, m.cust_tier),
+    cust_no: m.cust_no || '',
+    customer_name: m.customer_name || '',
+    store: m.store || ''
   };
   appendRecord_(t, rec);
   return { existing: false, rec: rec };
@@ -493,10 +514,10 @@ function validateForm_(req) {
 }
 
 function onlineState_(s, count) {
-  if (!isTrue_(s.registration_open)) return { open: false, reason: 'ปิดรับลงทะเบียนออนไลน์แล้ว' };
+  if (!isTrue_(s.registration_open)) return { open: false, kind: 'closed', reason: 'ปิดรับลงทะเบียนแล้ว' };
   const max = Number(s.max_capacity) || 0;
-  if (max && count >= max) return { open: false, reason: 'จำนวนผู้ลงทะเบียนครบแล้ว' };
-  return { open: true, reason: '' };
+  if (max && count >= max) return { open: false, kind: 'full', reason: 'ที่นั่งเต็มแล้ว' };
+  return { open: true, kind: '', reason: '' };
 }
 
 function findDuplicate_(t, phone, mmid, exceptId) {
@@ -604,6 +625,7 @@ function appendRecord_(t, rec) {
   t.sh.getRange(row, t.col.mmid + 1).setNumberFormat('@');
   // รหัสอย่าง 2E345 จะถูกแปลงเป็นตัวเลขถ้าไม่ตั้งเป็น text
   if (t.col.short_code !== undefined) t.sh.getRange(row, t.col.short_code + 1).setNumberFormat('@');
+  if (t.col.cust_no !== undefined) t.sh.getRange(row, t.col.cust_no + 1).setNumberFormat('@');
   range.setValues([t.h.map(function (name) { return safe_(rec[name]); })]);
   rec._row = row;
   t.records.push(rec);
@@ -774,6 +796,8 @@ function pub_(r) {
     mmid: r.mmid,
     company: r.company,
     sales_name: r.sales_name,
+    customer_name: r.customer_name || '',
+    store: r.store || '',
     source: r.source,
     tier: r.tier || 'Walk-in',
     status: r.status,
@@ -788,6 +812,7 @@ function full_(r) {
   o.created_at = fmt_(r.created_at, 'yyyy-MM-dd HH:mm');
   o.checked_in_at_full = fmt_(r.checked_in_at, 'yyyy-MM-dd HH:mm');
   o.match_method = r.match_method;
+  o.cust_no = r.cust_no ? String(r.cust_no) : '';
   o.note = r.note;
   return o;
 }

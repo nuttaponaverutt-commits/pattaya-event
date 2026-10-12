@@ -2,7 +2,14 @@ const SHEETS = {
   Registrations: [
     'reg_id', 'created_at', 'source', 'full_name', 'phone', 'mmid', 'company',
     'age_20_confirmed', 'pdpa_consent', 'sales_name', 'match_method', 'status',
-    'checked_in_at', 'checked_in_by', 'note', 'tier', 'short_code'
+    'checked_in_at', 'checked_in_by', 'note', 'tier', 'short_code',
+    'cust_no', 'customer_name', 'store'
+  ],
+  // รายชื่อลูกค้าเป้าหมาย นำเข้าจากหน้าหลังบ้าน (ไฟล์ยอด ALC หรือตาราง Excel ทั่วไป)
+  Customers: [
+    'mmid', 'cust_no', 'customer_name', 'customer_type', 'phone', 'contact_name',
+    'sales_code', 'sales_name', 'store', 'region', 'spend_3m', 'suggested_tier',
+    'invited', 'tier', 'note', 'updated_at'
   ],
   Sales_List: [],
   Checkin_Log: ['timestamp', 'reg_id', 'full_name', 'result', 'scanned_by', 'device'],
@@ -14,8 +21,12 @@ const DEFAULT_SETTINGS = [
   ['event_name', 'Wine & Spirits Discovery 2026', 'ชื่องาน'],
   ['event_date', '2026-11-06', 'วันที่จัดงาน (ปี-เดือน-วัน)'],
   ['event_time', '17:00 – 21:00 น.', 'เวลางาน'],
-  ['event_venue', 'Vela Grand Ballroom, Cape Dara Resort Pattaya', 'สถานที่จัดงาน'],
-  ['registration_open', true, 'TRUE = เปิดรับลงทะเบียน, FALSE = ปิด'],
+  ['event_venue', 'Vela Grand Ballroom ชั้น 2, Cape Dara Resort Pattaya', 'สถานที่จัดงาน'],
+  ['registration_open', true, 'TRUE = เปิดรับลงทะเบียน, FALSE = ปิด (แก้จากหลังบ้านได้)'],
+  ['msg_full_title', 'ขออภัย ที่นั่งเต็มแล้ว', 'หัวข้อบนหน้าลงทะเบียนเมื่อครบจำนวน'],
+  ['msg_full_body', 'ขณะนี้มีผู้ลงทะเบียนครบตามจำนวนที่กำหนดแล้ว ขอขอบพระคุณที่ให้ความสนใจในงาน Wine & Spirits Discovery 2026\nหากท่านลงทะเบียนไว้แล้ว สามารถเรียกดู QR สำหรับเข้างานได้ที่ปุ่มด้านล่าง\nRegistration is now full. Thank you for your interest.', 'ข้อความเมื่อครบจำนวน (ขึ้นบรรทัดใหม่ได้)'],
+  ['msg_closed_title', 'ปิดรับลงทะเบียนแล้ว', 'หัวข้อบนหน้าลงทะเบียนเมื่อปิดรับ'],
+  ['msg_closed_body', 'ขอขอบพระคุณที่ให้ความสนใจ ขณะนี้งาน Wine & Spirits Discovery 2026 ปิดรับลงทะเบียนเรียบร้อยแล้ว\nหากท่านลงทะเบียนไว้แล้ว สามารถเรียกดู QR สำหรับเข้างานได้ที่ปุ่มด้านล่าง สอบถามเพิ่มเติม กรุณาติดต่อ Sales ที่ดูแลท่าน\nRegistration is now closed.', 'ข้อความเมื่อปิดรับ (ขึ้นบรรทัดใหม่ได้)'],
   ['max_capacity', 800, 'จำนวนผู้เข้างานสูงสุด'],
   ['target_vvip', 100, 'เป้าจำนวน VVIP'],
   ['target_vip', 500, 'เป้าจำนวน VIP'],
@@ -30,6 +41,8 @@ const DEFAULT_SETTINGS = [
 
 // ค่าเริ่มต้นรุ่นแรก ถ้ายังไม่มีใครแก้ จะอัปเดตเป็นข้อมูลงานจริงตอนรัน setup
 const OLD_DEFAULTS = { event_name: 'Pattaya Event', event_venue: 'Pattaya', event_date: '' };
+// ค่าเริ่มต้นรุ่นก่อนที่ยังไม่มีใครแก้ ให้อัปเดตเป็นค่าใหม่ด้วย
+const OLD_VENUES = ['Pattaya', 'Vela Grand Ballroom, Cape Dara Resort Pattaya'];
 
 // รันจาก Apps Script editor (รันซ้ำได้ ไม่ทับข้อมูลเดิม ใช้อัปเกรดโครง Sheet ด้วย)
 function setup() {
@@ -56,8 +69,12 @@ function setup() {
   // phone และ mmid เป็น text เพื่อไม่ให้เลข 0 นำหน้าหาย
   const reg = ss.getSheetByName('Registrations');
   const regHead = reg.getRange(1, 1, 1, reg.getLastColumn()).getValues()[0].map(String);
-  ['phone', 'mmid', 'short_code'].forEach(function (col) {
+  ['phone', 'mmid', 'short_code', 'cust_no'].forEach(function (col) {
     reg.getRange(1, regHead.indexOf(col) + 1, reg.getMaxRows(), 1).setNumberFormat('@');
+  });
+  const cus = ss.getSheetByName('Customers');
+  ['mmid', 'cust_no', 'phone', 'sales_code'].forEach(function (col) {
+    cus.getRange(1, SHEETS.Customers.indexOf(col) + 1, cus.getMaxRows(), 1).setNumberFormat('@');
   });
   if (reg.getLastRow() > 1) {
     // แถวเก่าที่ยังไม่มีกลุ่ม ให้เป็น Walk-in
@@ -80,7 +97,7 @@ function setup() {
     : [];
   const keys = existing.map(function (r) { return r[0]; });
   existing.forEach(function (r, i) {
-    if (r[0] in OLD_DEFAULTS && r[1] === OLD_DEFAULTS[r[0]]) {
+    if ((r[0] in OLD_DEFAULTS && r[1] === OLD_DEFAULTS[r[0]]) || (r[0] === 'event_venue' && OLD_VENUES.indexOf(r[1]) !== -1)) {
       const def = DEFAULT_SETTINGS.find(function (d) { return d[0] === r[0]; });
       settings.getRange(i + 2, 2).setValue(def[1]);
     }
