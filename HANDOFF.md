@@ -69,8 +69,8 @@ Agenda (ข้อมูลภายใน ไม่แสดงบนหน้�
 
 ## ค้างอยู่ ต้องให้เจ้าของทำ
 
-1. **รัน `setup()` แล้ว `selfTest()`** ใน Apps Script editor (ยังไม่ได้รันรอบที่เพิ่ม tier / short_code / Lucky_Draw / invite_code)
-2. ลบรายการทดสอบ "nutt" (0900000000) จากหลังบ้าน
+1. **รัน `setup()` อีกครั้ง (15 ต.ค.)** เพื่อตั้งคอลัมน์ text ล่วงหน้าให้ลงทะเบียนเร็วขึ้น แล้วรัน `selfTest()`
+2. ลบรายการทดสอบ "nutt" (0900000000) และ "Test 12" (0891234567) จากหลังบ้าน
 3. ทดสอบสแกนด้วยมือถือ Staff จริง
 4. เปลี่ยนรหัส Staff/Admin ก่อนแจกทีม (ตอนนี้ยังเป็นรหัสทดสอบ)
 
@@ -100,6 +100,11 @@ Agenda (ข้อมูลภายใน ไม่แสดงบนหน้�
 
 - index.html / myqr.html ใช้ `docs/assets/landing.css` (โทนมืด-ทอง แรงบันดาลใจ mosa-ai-v1.21st.app) แยกจาก style.css ของ Staff/หลังบ้าน
 - หน้าถามอายุ 20+ (จำ 30 วัน: localStorage `pe_age_ok`) · Hero เต็มจอจากภาพ `assets/hero.jpg` (ภาพค็อกเทลไม่มีตัวหนังสือ) + Ken Burns + ประกายแสง (CSS) · หัวข้อเลื่อนขึ้นทีละบรรทัด · ส่วน The Experience (ประโยคสว่างทีละคำตามการเลื่อน + การ์ด 6 ใบ) · กำหนดการ · สถานที่ (Google Maps + Add to calendar .ics) · ฟอร์มการ์ดกระจก (PDPA ย่อ + อ่านเพิ่ม) · ปุ่มลงทะเบียนลอยบนมือถือ · KV เป็น og:image
+- **ลงทะเบียนเร็วขึ้น (15 ต.ค., commit 81285eb, deploy @11):** ก่อนแก้ 3–13 วินาที หลังแก้ 2–4 วินาที (วัดด้วยเบอร์ที่ลงไว้แล้ว)
+  - `prepareRegistration_` ใช้ `getSettingsCached_` (30 วินาที) และ `customerIndexCached_` (รายชื่อลูกค้าใน CacheService แบ่งชิ้นละ 30k ตัวอักษร เก็บ 5 นาที คีย์ `cust_n`, `cust_0..`)
+  - `clearConfigCache_` ล้าง `cust_n` ด้วย, `writeCustomers_` ล้าง cache หลังเขียนเสร็จ
+  - `appendRecord_` ข้ามการตั้ง text ทีละช่องถ้าแถว ≤ Script Property `REG_TEXT_ROWS` (setup ตั้งค่านี้ และขยายชีต Registrations เป็น 2000 แถว) → **ต้องรัน setup() หนึ่งครั้ง**
+  - ข้อความ "High traffic" ขึ้นหลังรอ 15 วินาที (เดิม 8)
 - **ปรับรอบ 2 (15 ต.ค., commit 1c9374e):** ให้ฟอร์มลงทะเบียนเป็นส่วนหลัก ลำดับหน้าคือ Hero → Register → Experience (3 การ์ด: Makro Bar & Bartenders / Sommelier & Discovery Booths / Lucky Draw & DJ ไม่ระบุจำนวนรอบ) → Event Details → footer
   - **เอากำหนดการ (Agenda) ออกแล้วตามที่เจ้าของสั่ง** (คีย์ `ag.*` ถูกลบออกจาก i18n)
   - ภาพพื้นหลังติดอยู่กับที่ (`.backdrop`) และมืดลงเรื่อยๆ ตอนเลื่อนลง (`.bd-dim`), เมนูเป็นแคปซูลลอยพร้อมปุ่ม Register สีทอง
