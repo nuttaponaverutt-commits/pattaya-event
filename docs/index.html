@@ -35,12 +35,25 @@
     </div>
   </div>
 
+  <!-- ภาพพื้นหลังอยู่กับที่ทั้งหน้า ค่อยๆ มืดลงเมื่อเลื่อน -->
+  <div class="backdrop" aria-hidden="true">
+    <div class="bd-img"></div>
+    <div class="bd-shade"></div>
+    <div class="sparkles" id="sparkles"></div>
+    <div class="bd-dim" id="bdDim"></div>
+  </div>
+
   <header class="nav" id="nav">
     <div class="wrap">
       <a class="brand" href="#top"><b>Makro</b> · Wine &amp; Spirits Discovery</a>
+      <nav class="nav-links" aria-label="Sections">
+        <a href="#experience" data-i18n="nav.experience">Experience</a>
+        <a href="#details" data-i18n="nav.details">Details</a>
+        <a href="myqr.html" data-i18n="nav.myqr">My QR</a>
+      </nav>
       <span class="nav-right">
         <span class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="th">TH</button></span>
-        <a class="nav-link" href="myqr.html" data-i18n="nav.myqr">My QR</a>
+        <a class="nav-reg" href="#register" data-i18n="nav.register">Register</a>
       </span>
     </div>
   </header>
@@ -48,8 +61,6 @@
   <main id="landing">
     <!-- Hero -->
     <section class="hero" id="top">
-      <div class="hero-bg" aria-hidden="true"></div>
-      <div class="sparkles" id="sparkles" aria-hidden="true"></div>
       <div class="wrap hero-inner">
         <div class="invite-badge" id="inviteBadge" hidden><b id="inviteTier">VIP</b><span data-i18n="invite.you">You're invited</span></div>
         <p class="eyebrow" data-i18n="hero.eyebrow">Makro presents · Wine &amp; Spirits Discovery 2026</p>
@@ -68,65 +79,14 @@
       <span class="scroll-cue" aria-hidden="true"></span>
     </section>
 
-    <!-- The Experience -->
-    <section class="section" id="experience">
-      <div class="wrap">
-        <p class="kicker reveal" data-i18n="xp.kicker">The Experience</p>
-        <p class="glow-text" id="glowText"></p>
-        <div class="xp-grid">
-          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h14l-6 8v6l3 2H8l3-2v-6z"/></svg></div><h3 data-i18n="xp.1.t">Makro Bar</h3><p data-i18n="xp.1.d"></p></article>
-          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8"/></svg></div><h3 data-i18n="xp.2.t">Bartenders</h3><p data-i18n="xp.2.d"></p></article>
-          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3h8v5a4 4 0 0 1-8 0zM12 12v9M9 21h6"/></svg></div><h3 data-i18n="xp.3.t">Sommelier</h3><p data-i18n="xp.3.d"></p></article>
-          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l2-5h14l2 5M4 9h16v11H4zM9 20v-6h6v6"/></svg></div><h3 data-i18n="xp.4.t">Discovery Booths</h3><p data-i18n="xp.4.d"></p></article>
-          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 13h16a8 8 0 0 1-16 0zM12 5v3M8 6l1 2M16 6l-1 2"/></svg></div><h3 data-i18n="xp.5.t">Cocktail Food</h3><p data-i18n="xp.5.d"></p></article>
-          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10h16v10H4zM2 7h20v3H2zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></svg></div><h3 data-i18n="xp.6.t">Lucky Draw &amp; DJ</h3><p data-i18n="xp.6.d"></p></article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Agenda -->
-    <section class="section" id="agenda" style="padding-top:0">
-      <div class="wrap">
-        <p class="kicker reveal" data-i18n="ag.kicker">Agenda</p>
-        <h2 class="reveal" data-i18n="ag.title">The evening</h2>
-        <ol class="timeline">
-          <li class="reveal"><span class="time">17:00</span><span class="what" data-i18n="ag.1"></span></li>
-          <li class="reveal"><span class="time">18:00</span><span class="what" data-i18n="ag.2"></span></li>
-          <li class="reveal"><span class="time">18:40</span><span class="what" data-i18n="ag.3"></span></li>
-          <li class="reveal hl"><span class="time">19:20</span><span class="what" data-i18n="ag.4"></span></li>
-          <li class="reveal hl"><span class="time">20:10</span><span class="what" data-i18n="ag.5"></span></li>
-          <li class="reveal"><span class="time">21:00</span><span class="what" data-i18n="ag.6"></span></li>
-        </ol>
-        <p class="lead reveal" style="margin-top:16px;font-size:14px" data-i18n="ag.note">The agenda may change.</p>
-      </div>
-    </section>
-
-    <!-- Venue -->
-    <section class="section" id="venue" style="padding-top:0">
-      <div class="wrap venue">
-        <div class="reveal">
-          <p class="kicker" data-i18n="venue.kicker">Venue</p>
-          <h2>Vela Grand Ballroom</h2>
-          <p class="lead" data-i18n="venue.lead">Registration opens at 5.00 PM.</p>
-        </div>
-        <div class="venue-card reveal">
-          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b id="venueText">Vela Grand Ballroom, 2nd Floor</b><span>Cape Dara Resort Pattaya</span></div></div>
-          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><div><b id="venueDate">Friday 6 November 2026</b><span id="venueTime">5.00 – 9.00 PM</span></div></div>
-          <div class="venue-actions">
-            <a class="btn btn-gold js-map" href="https://www.google.com/maps/search/?api=1&amp;query=Cape+Dara+Resort+Pattaya" target="_blank" rel="noopener" data-i18n="venue.map">Open in Google Maps</a>
-            <button type="button" class="btn btn-glass js-cal" data-i18n="venue.cal">Add to calendar</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Register -->
-    <section class="section" id="register" style="padding-top:0">
+    <section class="section" id="register" style="padding-top:clamp(40px,7vw,90px)">
       <div class="wrap reg-wrap">
         <div class="reveal">
           <p class="kicker" data-i18n="reg.kicker">Register</p>
           <h2 data-i18n="reg.heading">Reserve your place</h2>
           <p class="lead" data-i18n="reg.lead">Complete the form to receive your personal entry QR code.</p>
+          <p class="links"><a href="myqr.html" data-i18n="cta.myqr">Already registered? View my QR</a></p>
         </div>
         <div class="panel reveal">
           <div id="loadingBox" class="loading"><div class="skel"></div><div class="skel"></div><div class="skel" style="height:110px"></div></div>
@@ -174,6 +134,38 @@
         </div>
       </div>
     </section>
+    <!-- The Experience -->
+    <section class="section" id="experience">
+      <div class="wrap center-head">
+        <p class="sec-head reveal" data-i18n="xp.kicker">The Experience</p>
+        <p class="glow-text" id="glowText" style="margin-inline:auto"></p>
+        <div class="xp-grid">
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h14l-6 8v6l3 2H8l3-2v-6z"/></svg></div><h3 data-i18n="xp.1.t">Makro Bar &amp; Bartenders</h3><p data-i18n="xp.1.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3h8v5a4 4 0 0 1-8 0zM12 12v9M9 21h6"/></svg></div><h3 data-i18n="xp.2.t">Sommelier &amp; Discovery Booths</h3><p data-i18n="xp.2.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10h16v10H4zM2 7h20v3H2zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></svg></div><h3 data-i18n="xp.3.t">Lucky Draw &amp; DJ</h3><p data-i18n="xp.3.d"></p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Event Details -->
+    <section class="section" id="details" style="padding-top:0">
+      <div class="wrap">
+        <p class="sec-head reveal" data-i18n="det.kicker">Event Details</p>
+      <div class="wrap venue">
+        <div class="reveal">
+                    <h2>Vela Grand Ballroom</h2>
+          <p class="lead" data-i18n="venue.lead">Registration opens at 5.00 PM.</p>
+        </div>
+        <div class="venue-card reveal">
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b id="venueText">Vela Grand Ballroom, 2nd Floor</b><span>Cape Dara Resort Pattaya</span></div></div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><div><b id="venueDate">Friday 6 November 2026</b><span id="venueTime">5.00 – 9.00 PM</span></div></div>
+          <div class="venue-actions">
+            <a class="btn btn-gold js-map" href="https://www.google.com/maps/search/?api=1&amp;query=Cape+Dara+Resort+Pattaya" target="_blank" rel="noopener" data-i18n="venue.map">Open in Google Maps</a>
+            <button type="button" class="btn btn-glass js-cal" data-i18n="venue.cal">Add to calendar</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <main id="resultView" hidden>
@@ -201,6 +193,7 @@
   <div class="sticky-cta" id="stickyCta"><a class="btn btn-primary" href="#register" data-i18n="sticky.register">Register now</a></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
   <script src="assets/config.js"></script>
   <script src="assets/i18n.js"></script>
   <script src="assets/common.js"></script>
@@ -249,10 +242,11 @@
     })();
 
     const nav = document.getElementById('nav');
+    const bdDim = document.getElementById('bdDim');
     const sticky = document.getElementById('stickyCta');
     const registerSec = document.getElementById('register');
     function onScroll() {
-      nav.classList.toggle('solid', window.scrollY > 40);
+      bdDim.style.opacity = Math.min(.82, window.scrollY / (window.innerHeight * 1.1) * .82).toFixed(3);
       const r = registerSec.getBoundingClientRect();
       const formVisible = r.top < window.innerHeight && r.bottom > 0;
       sticky.classList.toggle('show', window.scrollY > window.innerHeight * .7 && !formVisible && !document.getElementById('landing').hidden);
@@ -427,10 +421,23 @@
       document.getElementById('landing').hidden = true;
       document.getElementById('resultView').hidden = false;
       sticky.classList.remove('show');
-      nav.classList.add('solid');
       window.scrollTo(0, 0);
       await showResult(res);
     });
+
+    // เลื่อนนุ่มแบบมีแรงเฉื่อย (เฉพาะคอมที่ใช้เมาส์ มือถือใช้การเลื่อนปกติของเครื่อง)
+    if (window.Lenis && !reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+      const lenis = new Lenis({ lerp: 0.1 });
+      (function raf(time) { lenis.raf(time); requestAnimationFrame(raf); })(performance.now());
+      document.addEventListener('click', function (e) {
+        const a = e.target.closest('a[href^="#"]');
+        if (!a || a.getAttribute('href').length < 2) return;
+        const target = document.querySelector(a.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        lenis.scrollTo(target, { offset: -84 });
+      });
+    }
 
     buildGlow();
     onScroll();
