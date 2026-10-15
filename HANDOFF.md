@@ -26,7 +26,7 @@
 **Wine & Spirits Discovery 2026** ("Discover A World of Flavours") presented by Makro
 6 พ.ย. 2026 · 17:00–21:00 · Vela Grand Ballroom, Cape Dara Resort Pattaya · ผู้จัด Bang Bang Event & Organizer
 งาน alcohol แบบปิด ความจุ 800 คน · เป้า VVIP 100 / VIP 500 / Walk-in 200
-Agenda: 17:00 ลงทะเบียน · 19:20 Lucky Draw #1 · 20:10 Lucky Draw #2 · 21:00 จบงาน
+Agenda (ข้อมูลภายใน ไม่แสดงบนหน้าเว็บแล้ว): 17:00 ลงทะเบียน · 19:20 Lucky Draw #1 · 20:10 Lucky Draw #2 · 21:00 จบงาน
 
 ## สถาปัตยกรรม
 
@@ -100,7 +100,11 @@ Agenda: 17:00 ลงทะเบียน · 19:20 Lucky Draw #1 · 20:10 Lucky 
 
 - index.html / myqr.html ใช้ `docs/assets/landing.css` (โทนมืด-ทอง แรงบันดาลใจ mosa-ai-v1.21st.app) แยกจาก style.css ของ Staff/หลังบ้าน
 - หน้าถามอายุ 20+ (จำ 30 วัน: localStorage `pe_age_ok`) · Hero เต็มจอจากภาพ `assets/hero.jpg` (ภาพค็อกเทลไม่มีตัวหนังสือ) + Ken Burns + ประกายแสง (CSS) · หัวข้อเลื่อนขึ้นทีละบรรทัด · ส่วน The Experience (ประโยคสว่างทีละคำตามการเลื่อน + การ์ด 6 ใบ) · กำหนดการ · สถานที่ (Google Maps + Add to calendar .ics) · ฟอร์มการ์ดกระจก (PDPA ย่อ + อ่านเพิ่ม) · ปุ่มลงทะเบียนลอยบนมือถือ · KV เป็น og:image
-- ข้อความ Experience / กำหนดการ ร่างจาก PDF ของ organizer รอผู้ใช้ตรวจ
+- **ปรับรอบ 2 (15 ต.ค., commit 1c9374e):** ให้ฟอร์มลงทะเบียนเป็นส่วนหลัก ลำดับหน้าคือ Hero → Register → Experience (3 การ์ด: Makro Bar & Bartenders / Sommelier & Discovery Booths / Lucky Draw & DJ ไม่ระบุจำนวนรอบ) → Event Details → footer
+  - **เอากำหนดการ (Agenda) ออกแล้วตามที่เจ้าของสั่ง** (คีย์ `ag.*` ถูกลบออกจาก i18n)
+  - ภาพพื้นหลังติดอยู่กับที่ (`.backdrop`) และมืดลงเรื่อยๆ ตอนเลื่อนลง (`.bd-dim`), เมนูเป็นแคปซูลลอยพร้อมปุ่ม Register สีทอง
+  - เลื่อนนุ่มบนคอมด้วย Lenis 1.1.13 (เฉพาะเครื่องที่ใช้เมาส์) ตามแบบ makro-ceo-roundtable.molevent.tech
+  - มือถือ: ภาพอยู่ด้านบนสูง 380px และข้อความอยู่ใต้ภาพ (ตัวเลือก B)
 - MMID บนหน้าลูกค้าเปลี่ยนเป็น "Makro membership number" / "หมายเลขสมาชิก Makro"
 - Staff ล็อกอินด้วยรหัสอย่างเดียว ชื่อเครื่องสุ่มเอง (Staff-XXXX, localStorage `pe_station`) กดชื่อมุมบนเพื่อเปลี่ยน · ส่ง `station_name` ทุกคำขอ server ใช้แทนชื่อตอนล็อกอิน
 
