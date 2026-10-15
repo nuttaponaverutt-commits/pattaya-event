@@ -264,7 +264,8 @@ function apiCustomersBulk_(req) {
 
 // ---------- API: ตั้งค่าการลงทะเบียน ----------
 
-const EDITABLE_SETTINGS = ['registration_open', 'max_capacity', 'msg_full_title', 'msg_full_body', 'msg_closed_title', 'msg_closed_body'];
+const EDITABLE_SETTINGS = ['registration_open', 'max_capacity', 'msg_full_title', 'msg_full_body', 'msg_closed_title', 'msg_closed_body',
+  'msg_full_title_en', 'msg_full_body_en', 'msg_closed_title_en', 'msg_closed_body_en'];
 
 function apiSettingsGet_() {
   const s = getSettings_();

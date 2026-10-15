@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ลงทะเบียนเข้าร่วมงาน</title>
+  <title>Registration</title>
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,8 +13,11 @@
 <body>
   <header class="topbar">
     <div class="wrap">
-      <span class="js-event-name">Pattaya Event</span>
-      <a href="myqr.html">ดู QR ของฉัน</a>
+      <span class="js-event-name">Wine &amp; Spirits Discovery 2026</span>
+      <span class="topbar-right">
+        <span class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="th">TH</button></span>
+        <a href="myqr.html" data-i18n="nav.myqr">My QR</a>
+      </span>
     </div>
   </header>
 
@@ -28,67 +31,67 @@
         <h1 class="js-event-name">Wine &amp; Spirits Discovery 2026</h1>
         <p class="tagline">Sip &bull; Discover &bull; Connect</p>
         <div class="meta">
-          <span>วันที่ <b id="eventDate">จะแจ้งให้ทราบ</b></span>
-          <span>เวลา <b id="eventTime">-</b></span>
-          <span>สถานที่ <b id="eventVenue">Cape Dara Resort Pattaya</b></span>
+          <span><span data-i18n="ev.date">Date</span> <b id="eventDate" data-i18n="ev.tbc">To be announced</b></span>
+          <span><span data-i18n="ev.time">Time</span> <b id="eventTime">-</b></span>
+          <span><span data-i18n="ev.venue">Venue</span> <b id="eventVenue">Cape Dara Resort Pattaya</b></span>
         </div>
         <div class="actions" id="openActions">
-          <a href="#register" class="btn btn-primary btn-block" id="ctaRegister">ลงทะเบียนเข้าร่วมงาน</a>
-          <a href="myqr.html" class="btn btn-outline btn-block">ลงทะเบียนแล้ว ดู QR อีกครั้ง</a>
+          <a href="#register" class="btn btn-primary btn-block" id="ctaRegister" data-i18n="cta.register">Register now</a>
+          <a href="myqr.html" class="btn btn-outline btn-block" data-i18n="cta.myqr">Already registered? View my QR</a>
         </div>
         <!-- แสดงแทนฟอร์มเมื่อที่นั่งเต็มหรือปิดรับ (ข้อความแก้ได้จากหลังบ้าน) -->
         <div class="closed-panel" id="closedPanel" hidden>
           <h2 id="closedTitle"></h2>
           <div id="closedBody"></div>
-          <a href="myqr.html" class="btn btn-primary btn-block">ดู QR ของฉัน</a>
+          <a href="myqr.html" class="btn btn-primary btn-block" data-i18n="nav.myqr">My QR</a>
         </div>
-        <p class="notice">งานนี้สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น กรุณาแสดงบัตรประชาชนที่หน้างาน</p>
+        <p class="notice" data-i18n="notice.age">This event is for guests aged 20 and over.</p>
       </section>
 
       <section class="section" id="register">
-        <h2>ลงทะเบียน</h2>
-        <p class="sub">กรอกข้อมูลให้ครบ เมื่อส่งแล้วจะได้รับ QR สำหรับเข้างาน</p>
+        <h2 data-i18n="reg.title">Registration</h2>
+        <p class="sub" data-i18n="reg.sub">Complete the form below to receive your entry QR code.</p>
 
         <div id="closedBox" class="alert" hidden></div>
-        <div id="loadingBox" class="loading">กำลังโหลด...</div>
+        <div id="loadingBox" class="loading" data-i18n="loading">Loading...</div>
 
         <form id="regForm" class="panel" novalidate hidden>
           <div id="formError" class="alert" hidden></div>
 
           <div class="field" data-f="full_name">
-            <label for="full_name">ชื่อ-นามสกุล<span class="req">*</span></label>
+            <label for="full_name"><span data-i18n="f.name">Full name</span><span class="req">*</span></label>
             <input type="text" id="full_name" name="full_name" autocomplete="name" maxlength="100">
-            <div class="err">กรุณากรอกชื่อ-นามสกุล</div>
+            <div class="err" data-i18n="f.name.err">Please enter your full name</div>
           </div>
 
           <div class="field" data-f="phone">
-            <label for="phone">เบอร์โทรศัพท์มือถือ<span class="req">*</span></label>
+            <label for="phone"><span data-i18n="f.phone">Mobile number</span><span class="req">*</span></label>
             <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
-            <div class="err">กรุณากรอกเบอร์โทร 10 หลัก</div>
+            <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
           </div>
 
           <div class="field" data-f="mmid">
-            <label for="mmid">MMID <span class="opt">(ถ้ามี)</span></label>
+            <label for="mmid"><span data-i18n="f.mmid">MMID</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
             <input type="text" id="mmid" name="mmid" maxlength="30" autocomplete="off">
-            <div class="help">หมายเลขสมาชิก Makro ของคุณ</div>
+            <div class="help" data-i18n="f.mmid.help">Your Makro membership number</div>
           </div>
 
           <div class="field" data-f="company">
-            <label for="company">ชื่อร้าน / บริษัท <span class="opt">(ถ้ามี)</span></label>
+            <label for="company"><span data-i18n="f.company">Shop / Company name</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
             <input type="text" id="company" name="company" maxlength="100" autocomplete="organization">
           </div>
 
           <label class="check" data-f="age20">
             <input type="checkbox" id="age20">
-            <span>ข้าพเจ้ายืนยันว่ามีอายุ 20 ปีบริบูรณ์ขึ้นไป และจะแสดงบัตรประชาชนที่หน้างาน<span class="req">*</span></span>
+            <span><span data-i18n="f.age20">I confirm that I am 20 years of age or older.</span><span class="req">*</span></span>
           </label>
 
           <label class="check" data-f="pdpa">
             <input type="checkbox" id="pdpa">
-            <span>ข้าพเจ้ายินยอมให้ผู้จัดงานเก็บและใช้ข้อมูล ชื่อ เบอร์โทรศัพท์ MMID และชื่อร้าน เพื่อการลงทะเบียน การเข้าร่วมงาน และการติดต่อที่เกี่ยวข้องกับงานนี้<span class="req">*</span></span>
+            <span><span data-i18n="f.pdpa">I consent to the organiser collecting and using my data.</span><span class="req">*</span></span>
           </label>
 
-          <button type="submit" class="btn btn-primary btn-block" id="submitBtn">ส่งข้อมูลลงทะเบียน</button>
+          <button type="submit" class="btn btn-primary btn-block" id="submitBtn" data-i18n="f.submit">Submit registration</button>
         </form>
       </section>
     </div>
@@ -96,66 +99,74 @@
 
   <main id="resultView" hidden>
     <div class="narrow section result">
-      <h2 id="resultTitle">ลงทะเบียนสำเร็จ</h2>
-      <p class="sub" id="resultSub">กรุณาบันทึกรูป QR นี้ไว้ และแสดงพร้อมบัตรประชาชนที่หน้างาน</p>
+      <h2 id="resultTitle"></h2>
+      <p class="sub" id="resultSub"></p>
       <div id="qrHost"></div>
-      <div class="links"><a href="./">กลับหน้าแรก</a></div>
+      <div class="links"><a href="./" data-i18n="res.home">Back to home</a></div>
     </div>
   </main>
 
-  <footer>&copy; <span class="js-event-name">Pattaya Event</span></footer>
+  <footer>&copy; <span class="js-event-name">Wine &amp; Spirits Discovery 2026</span></footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script src="assets/config.js"></script>
+  <script src="assets/i18n.js"></script>
   <script src="assets/common.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const isWalkin = params.get('src') === 'walkin';
     const inviteCode = params.get('inv') || '';
-    let eventInfo = {};
+    let cfgRaw = null;      // ข้อมูลงานจากระบบ
+    let lastResult = null;  // ผลลงทะเบียนล่าสุด (ใช้วาดการ์ดใหม่เมื่อเปลี่ยนภาษา)
 
     loadHero(document.getElementById('hero'));
+    initLangToggle(render);
 
     (async function init() {
       const cfg = await api('config', { inv: inviteCode });
       document.getElementById('loadingBox').hidden = true;
-      if (!cfg.ok) {
-        showClosed(cfg.error || 'ไม่สามารถโหลดข้อมูลงานได้ กรุณาลองใหม่อีกครั้ง');
-        return;
-      }
-      eventInfo = cfg;
-      if (cfg.event_name) {
-        document.querySelectorAll('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
-        document.title = 'ลงทะเบียน | ' + cfg.event_name;
-      }
-      if (cfg.event_date) document.getElementById('eventDate').textContent = thaiDate(cfg.event_date);
-      if (cfg.event_time) document.getElementById('eventTime').textContent = cfg.event_time;
-      if (cfg.event_venue) document.getElementById('eventVenue').textContent = cfg.event_venue;
-      if (cfg.tier === 'VVIP' || cfg.tier === 'VIP') {
-        const box = document.getElementById('inviteTier');
-        box.innerHTML = '<span class="tier-pill tier-' + cfg.tier + '">คำเชิญ ' + cfg.tier + '</span>';
-        box.hidden = false;
-      }
-
-      if (!cfg.registration_open) {
-        showClosedPanel(cfg);
-        return;
-      }
+      if (!cfg.ok) { showClosed(tErr(cfg.error) || t('err.load')); return; }
+      cfgRaw = cfg;
+      render();
+      if (!cfg.registration_open) return;
       document.getElementById('regForm').hidden = false;
       if (isWalkin) document.getElementById('register').scrollIntoView();
     })();
 
-    // ที่นั่งเต็ม / ปิดรับ: ซ่อนฟอร์ม แสดงข้อความจากหลังบ้าน บรรทัดภาษาอังกฤษ (ไม่มีอักษรไทย) แสดงเป็นตัวเอียง
+    // วาดข้อความที่ขึ้นกับภาษาและข้อมูลจากระบบ (เรียกซ้ำเมื่อสลับ EN / TH)
+    function render() {
+      document.title = t('title.reg') + ' | Wine & Spirits Discovery 2026';
+      if (!cfgRaw) return;
+      const ev = eventInfoFor(cfgRaw);
+      if (ev.event_name) document.querySelectorAll('.js-event-name').forEach(function (el) { el.textContent = ev.event_name; });
+      if (ev.event_date) document.getElementById('eventDate').textContent = ev.event_date_text;
+      if (ev.event_time) document.getElementById('eventTime').textContent = ev.event_time;
+      if (ev.event_venue) document.getElementById('eventVenue').textContent = ev.event_venue;
+      if (ev.tier === 'VVIP' || ev.tier === 'VIP') {
+        const box = document.getElementById('inviteTier');
+        box.innerHTML = '<span class="tier-pill tier-' + ev.tier + '">' + t('invite', { tier: ev.tier }) + '</span>';
+        box.hidden = false;
+      }
+      if (!cfgRaw.registration_open) showClosedPanel(cfgRaw);
+      if (lastResult) showResult(lastResult);
+    }
+
+    // ที่นั่งเต็ม / ปิดรับ: ซ่อนฟอร์ม แสดงข้อความ (ข้อความแก้ได้จากหลังบ้าน ทั้งไทยและอังกฤษ)
     function showClosedPanel(cfg) {
+      const kind = cfg.closed_kind || 'closed';
+      const en = LANG === 'en';
+      const title = en ? (cfg.closed_title_en || t('closed.' + kind + '.title')) : (cfg.closed_title || t('closed.' + kind + '.title'));
+      const bodyText = en ? (cfg.closed_body_en || t('closed.' + kind + '.body')) : (cfg.closed_body || t('closed.' + kind + '.body'));
       document.getElementById('openActions').hidden = true;
       document.getElementById('register').hidden = true;
-      document.getElementById('closedTitle').textContent = cfg.closed_title || cfg.closed_reason || 'ปิดรับลงทะเบียนแล้ว';
+      document.getElementById('closedTitle').textContent = title;
       const body = document.getElementById('closedBody');
       body.textContent = '';
-      String(cfg.closed_body || '').split('\n').filter(function (l) { return l.trim(); }).forEach(function (line) {
+      String(bodyText).split('\n').filter(function (l) { return l.trim(); }).forEach(function (line) {
         const p = document.createElement('p');
         p.textContent = line.trim();
-        if (!/[฀-๿]/.test(line)) p.className = 'en';
+        // ภาษาไทยแสดงบรรทัดภาษาอังกฤษเป็นตัวเอียงทอง ภาษาอังกฤษแสดงปกติ
+        if (!en && !/[฀-๿]/.test(line)) p.className = 'en';
         body.appendChild(p);
       });
       document.getElementById('closedPanel').hidden = false;
@@ -165,6 +176,12 @@
       const box = document.getElementById('closedBox');
       box.textContent = msg;
       box.hidden = false;
+    }
+
+    async function showResult(res) {
+      document.getElementById('resultTitle').textContent = t(res.existing ? 'res.exist' : 'res.ok');
+      document.getElementById('resultSub').textContent = t(res.existing ? 'res.exist.sub' : 'res.sub');
+      await showQrCard(document.getElementById('qrHost'), Object.assign(eventInfoFor(cfgRaw || {}), res));
     }
 
     const form = document.getElementById('regForm');
@@ -195,7 +212,7 @@
       });
       const errBox = document.getElementById('formError');
       if (bad.length) {
-        errBox.textContent = 'กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน';
+        errBox.textContent = t('f.missing');
         errBox.hidden = false;
         form.querySelector('[data-f="' + bad[0] + '"]').scrollIntoView({ block: 'center' });
         return;
@@ -204,31 +221,26 @@
 
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
-      btn.textContent = 'กำลังส่งข้อมูล...';
-      const slowTimer = setTimeout(function () {
-        btn.textContent = 'มีผู้ลงทะเบียนจำนวนมาก กรุณารอสักครู่ และอย่าปิดหน้านี้';
-      }, 8000);
+      btn.textContent = t('f.sending');
+      const slowTimer = setTimeout(function () { btn.textContent = t('f.slow'); }, 8000);
       const res = await api('register', data);
       clearTimeout(slowTimer);
       btn.disabled = false;
-      btn.textContent = 'ส่งข้อมูลลงทะเบียน';
+      btn.textContent = t('f.submit');
 
       if (!res.ok) {
-        errBox.textContent = res.error;
+        errBox.textContent = tErr(res.error);
         errBox.hidden = false;
         errBox.scrollIntoView({ block: 'center' });
         return;
       }
       saveMyReg(res);
+      lastResult = res;
       document.getElementById('landing').hidden = true;
       document.getElementById('hero').hidden = true;
       document.getElementById('resultView').hidden = false;
-      if (res.existing) {
-        document.getElementById('resultTitle').textContent = 'คุณลงทะเบียนไว้แล้ว';
-        document.getElementById('resultSub').textContent = 'เบอร์โทรหรือ MMID นี้ลงทะเบียนไว้แล้ว นี่คือ QR เดิมของคุณ กรุณาแสดงพร้อมบัตรประชาชนที่หน้างาน';
-      }
       window.scrollTo(0, 0);
-      await showQrCard(document.getElementById('qrHost'), Object.assign({}, eventInfo, res));
+      await showResult(res);
     });
   </script>
 </body>

@@ -92,7 +92,11 @@ function apiConfig_(req) {
     closed_reason: state.reason,
     closed_kind: state.kind || '',
     closed_title: state.kind ? String(s['msg_' + state.kind + '_title'] || state.reason) : '',
-    closed_body: state.kind ? String(s['msg_' + state.kind + '_body'] || '') : ''
+    closed_body: state.kind ? String(s['msg_' + state.kind + '_body'] || '') : '',
+    closed_title_en: state.kind ? String(s['msg_' + state.kind + '_title_en'] || '') : '',
+    closed_body_en: state.kind ? String(s['msg_' + state.kind + '_body_en'] || '') : '',
+    event_time_en: String(s.event_time_en || ''),
+    event_venue_en: String(s.event_venue_en || '')
   };
   cachePut_('cfg_' + tier, JSON.stringify(out), 20);
   if (CACHE_ERR) out.cache_error = CACHE_ERR;

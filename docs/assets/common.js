@@ -1,4 +1,4 @@
-// คำสั่งที่ส่งซ้ำได้ปลอดภัย (ส่งซ้ำแล้วไม่เกิดข้อมูลซ้ำ) ใช้ลองใหม่อัตโนมัติตอนเน็ตสะดุดหรือระบบยุ่ง
+﻿// คำสั่งที่ส่งซ้ำได้ปลอดภัย (ส่งซ้ำแล้วไม่เกิดข้อมูลซ้ำ) ใช้ลองใหม่อัตโนมัติตอนเน็ตสะดุดหรือระบบยุ่ง
 const RETRY_SAFE = ['config', 'register', 'lookup', 'login', 'scan', 'checkin', 'search', 'staff_register',
   'dashboard', 'list', 'sales_names', 'links', 'draw_list', 'logout'];
 
@@ -87,7 +87,7 @@ async function drawQrCard(info) {
   g.fillText(fitText(g, info.event_name || 'Wine & Spirits Discovery 2026', CARD_W - 80), CARD_W / 2, 70);
   g.font = '400 23px ' + font;
   g.fillStyle = '#e4cf9c';
-  g.fillText(fitText(g, [thaiDate(info.event_date), info.event_time].filter(Boolean).join('  •  '), CARD_W - 80), CARD_W / 2, 112);
+  g.fillText(fitText(g, [info.event_date_text || thaiDate(info.event_date), info.event_time].filter(Boolean).join('  •  '), CARD_W - 80), CARD_W / 2, 112);
   g.fillText(fitText(g, info.event_venue || '', CARD_W - 80), CARD_W / 2, 146);
 
   g.fillStyle = '#1c1b18';
@@ -122,7 +122,7 @@ async function drawQrCard(info) {
   // รหัสสำรอง 5 ตัว ให้ Staff พิมพ์แทนเมื่อสแกนไม่ได้
   g.fillStyle = '#6c675d';
   g.font = '400 22px ' + font;
-  g.fillText('รหัสเข้างาน (กรณีสแกนไม่ได้)', CARD_W / 2, y0 + qrPx + 34);
+  g.fillText(cardText('card.code', 'รหัสเข้างาน (กรณีสแกนไม่ได้)'), CARD_W / 2, y0 + qrPx + 34);
   g.fillStyle = '#1c1b18';
   g.font = '600 46px "IBM Plex Mono", monospace';
   g.fillText(spaced(info.short_code || info.reg_id), CARD_W / 2, y0 + qrPx + 84);
@@ -135,10 +135,15 @@ async function drawQrCard(info) {
   g.stroke();
   g.fillStyle = '#6b6b6b';
   g.font = '400 24px ' + font;
-  g.fillText('แสดง QR นี้พร้อมบัตรประชาชน ณ จุดลงทะเบียนหน้างาน', CARD_W / 2, 910);
-  g.fillText('สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น', CARD_W / 2, 948);
+  g.fillText(fitText(g, cardText('card.l1', 'แสดง QR นี้พร้อมบัตรประชาชน ณ จุดลงทะเบียนหน้างาน'), CARD_W - 60), CARD_W / 2, 910);
+  g.fillText(cardText('card.l2', 'สำหรับผู้มีอายุ 20 ปีบริบูรณ์ขึ้นไปเท่านั้น'), CARD_W / 2, 948);
 
   return c.toDataURL('image/png');
+}
+
+// ข้อความบนการ์ด: หน้าลูกค้าใช้ตามภาษาที่เลือก (i18n.js) หน้า Staff/หลังบ้านใช้ภาษาไทย
+function cardText(key, thai) {
+  return typeof t === 'function' ? t(key) : thai;
 }
 
 function spaced(code) {
@@ -179,12 +184,12 @@ async function showQrCard(host, info) {
   btn.className = 'btn btn-primary btn-block';
   btn.href = url;
   btn.download = 'QR-' + info.reg_id + '.png';
-  btn.textContent = 'บันทึกรูป QR';
+  btn.textContent = cardText('card.save', 'บันทึกรูป QR');
   host.appendChild(btn);
 
   const hint = document.createElement('p');
   hint.className = 'hint center';
-  hint.textContent = 'หากกดบันทึกไม่ได้ ให้กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ" หรือแคปหน้าจอไว้';
+  hint.textContent = cardText('card.hint', 'หากกดบันทึกไม่ได้ ให้กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ" หรือแคปหน้าจอไว้');
   host.appendChild(hint);
 }
 

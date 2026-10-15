@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ดู QR ของฉัน</title>
+  <title>My QR</title>
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,52 +13,64 @@
 <body>
   <header class="topbar">
     <div class="wrap">
-      <span class="js-event-name">Pattaya Event</span>
-      <a href="./">หน้าแรก</a>
+      <span class="js-event-name">Wine &amp; Spirits Discovery 2026</span>
+      <span class="topbar-right">
+        <span class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="th">TH</button></span>
+        <a href="./" data-i18n="nav.home">Home</a>
+      </span>
     </div>
   </header>
 
   <main class="narrow section">
     <section id="lookupView">
-      <h2>ดู QR อีกครั้ง</h2>
-      <p class="sub">กรอกเบอร์โทรศัพท์ที่ใช้ลงทะเบียน</p>
+      <h2 data-i18n="my.title">View my QR again</h2>
+      <p class="sub" data-i18n="my.sub">Enter the mobile number you registered with</p>
       <form id="lookupForm" class="panel" novalidate>
         <div id="lookupError" class="alert" hidden></div>
         <div class="field" data-f="phone">
-          <label for="phone">เบอร์โทรศัพท์มือถือ<span class="req">*</span></label>
+          <label for="phone"><span data-i18n="f.phone">Mobile number</span><span class="req">*</span></label>
           <input type="tel" id="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
-          <div class="err">กรุณากรอกเบอร์โทร 10 หลัก</div>
+          <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
         </div>
-        <button type="submit" class="btn btn-primary btn-block" id="lookupBtn">ค้นหา QR</button>
+        <button type="submit" class="btn btn-primary btn-block" id="lookupBtn" data-i18n="my.find">Find my QR</button>
       </form>
-      <p class="links center">ยังไม่ได้ลงทะเบียน? <a href="./#register">ลงทะเบียนที่นี่</a></p>
+      <p class="links center"><span data-i18n="my.notreg">Not registered yet?</span> <a href="./#register" data-i18n="my.regHere">Register here</a></p>
     </section>
 
     <section id="resultView" class="result" hidden>
-      <h2>QR สำหรับเข้างาน</h2>
-      <p class="sub">แสดง QR นี้พร้อมบัตรประชาชนที่หน้างาน</p>
+      <h2 data-i18n="my.qrTitle">Your entry QR</h2>
+      <p class="sub" data-i18n="my.qrSub">Present this QR with your ID card at the event.</p>
       <div id="qrHost"></div>
-      <div class="links"><a href="#" id="notMe">ไม่ใช่ QR ของคุณ? ค้นหาด้วยเบอร์โทร</a></div>
+      <div class="links"><a href="#" id="notMe" data-i18n="my.notMe">Not your QR? Search by mobile number</a></div>
     </section>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script src="assets/config.js"></script>
+  <script src="assets/i18n.js"></script>
   <script src="assets/common.js"></script>
   <script>
-    let eventInfo = {};
+    let cfgRaw = {};
+    let current = null; // การ์ดที่แสดงอยู่ (วาดใหม่เมื่อสลับภาษา)
     const cfgPromise = api('config').then(function (cfg) {
       if (cfg.ok) {
-        eventInfo = cfg;
+        cfgRaw = cfg;
         if (cfg.event_name) document.querySelectorAll('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
       }
     });
 
+    initLangToggle(function () {
+      document.title = t('title.myqr') + ' | Wine & Spirits Discovery 2026';
+      if (current) show(current);
+    });
+    document.title = t('title.myqr') + ' | Wine & Spirits Discovery 2026';
+
     async function show(reg) {
+      current = reg;
       await cfgPromise;
       document.getElementById('lookupView').hidden = true;
       document.getElementById('resultView').hidden = false;
-      await showQrCard(document.getElementById('qrHost'), Object.assign({}, eventInfo, reg));
+      await showQrCard(document.getElementById('qrHost'), Object.assign(eventInfoFor(cfgRaw), reg));
     }
 
     const saved = loadMyReg();
@@ -76,6 +88,7 @@
 
     document.getElementById('notMe').addEventListener('click', function (e) {
       e.preventDefault();
+      current = null;
       document.getElementById('resultView').hidden = true;
       document.getElementById('lookupView').hidden = false;
       document.getElementById('phone').focus();
@@ -92,12 +105,12 @@
 
       const btn = document.getElementById('lookupBtn');
       btn.disabled = true;
-      btn.textContent = 'กำลังค้นหา...';
+      btn.textContent = t('my.finding');
       const res = await api('lookup', { phone: phone });
       btn.disabled = false;
-      btn.textContent = 'ค้นหา QR';
+      btn.textContent = t('my.find');
       if (!res.ok) {
-        errBox.textContent = res.error;
+        errBox.textContent = tErr(res.error);
         errBox.hidden = false;
         return;
       }
