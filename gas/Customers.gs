@@ -119,6 +119,32 @@ function matchCustomer_(idx, f) {
   };
 }
 
+// ล้างรายชื่อลูกค้าทั้งหมด ก่อนอัปรายชื่อชุดจริง (รันจาก Apps Script editor)
+// สำรองไว้ในแท็บซ่อน Customers_backup_วันที่ ก่อนล้าง และให้ผู้ลงทะเบียนที่จับคู่จากรายชื่อนี้กลับเป็น "ไม่มี Sales"
+// (รายการที่ Admin เลือก Sales เองไม่ถูกเปลี่ยน)
+function clearCustomerList() {
+  const ss = SpreadsheetApp.getActive();
+  const sh = ss.getSheetByName('Customers');
+  const n = sh ? sh.getLastRow() - 1 : 0;
+  if (n > 0) {
+    const name = 'Customers_backup_' + Utilities.formatDate(new Date(), TZ, 'yyyyMMdd_HHmm');
+    sh.copyTo(ss).setName(name).hideSheet();
+    sh.getRange(2, 1, n, sh.getLastColumn()).clearContent();
+    Logger.log('ล้างรายชื่อลูกค้า ' + n + ' ราย (สำรองไว้ในแท็บซ่อน ' + name + ')');
+  } else {
+    Logger.log('แท็บ Customers ไม่มีรายชื่อลูกค้า');
+  }
+  const t = readRegs_();
+  let reset = 0;
+  t.records.forEach(function (r) {
+    if (r.match_method === 'manual' || !(r.sales_name || r.cust_no)) return;
+    writeFields_(t, r, { sales_name: '', match_method: 'none', cust_no: '', customer_name: '', store: '' });
+    reset++;
+  });
+  clearConfigCache_();
+  Logger.log('ผู้ลงทะเบียนที่กลับเป็น "ไม่มี Sales": ' + reset + ' คน');
+}
+
 // ---------- API: รายชื่อลูกค้า ----------
 
 // นำเข้ารายชื่อ (หน้าเว็บรวมยอดต่อลูกค้ามาแล้ว) รวมกับของเดิมด้วย MMID/เลขลูกค้า
