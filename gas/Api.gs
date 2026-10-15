@@ -61,8 +61,10 @@ function handle_(req) {
   const action = req && req.action;
   if (PUBLIC_ACTIONS[action]) return PUBLIC_ACTIONS[action](req);
 
-  const sess = verifyToken_(req.token);
+  let sess = verifyToken_(req.token);
   if (!sess) return { ok: false, auth: false, error: 'กรุณาเข้าสู่ระบบใหม่' };
+  // เครื่อง Staff เปลี่ยนชื่อตัวเองได้หลังล็อกอิน ใช้ชื่อล่าสุดที่ส่งมาแทนชื่อตอนล็อกอิน
+  if (sess.role === 'staff' && req.station_name) sess = Object.assign({}, sess, { station: clip_(req.station_name, 40) });
   if (STAFF_ACTIONS[action]) return STAFF_ACTIONS[action](req, sess);
   if (ADMIN_ACTIONS[action]) {
     if (sess.role !== 'admin') return { ok: false, auth: false, error: 'ไม่มีสิทธิ์ใช้งานส่วนนี้' };

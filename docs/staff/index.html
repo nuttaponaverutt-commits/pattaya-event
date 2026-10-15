@@ -42,10 +42,6 @@
     <form id="loginForm" class="panel" novalidate>
       <div id="loginError" class="alert" hidden></div>
       <div class="field">
-        <label for="station">ชื่อจุดสแกน</label>
-        <input type="text" id="station" maxlength="40" placeholder="เช่น จุด 1" autocomplete="off">
-      </div>
-      <div class="field">
         <label for="password">รหัส Staff</label>
         <input type="password" id="password" autocomplete="current-password">
       </div>
@@ -56,7 +52,7 @@
   <!-- App -->
   <div id="appView" hidden>
     <header class="appbar">
-      <div class="title"><span class="js-event-name">Pattaya Event</span><small id="stationLabel"></small></div>
+      <div class="title"><span class="js-event-name">Pattaya Event</span><button type="button" class="station-btn" id="stationLabel" title="เปลี่ยนชื่อเครื่องนี้"></button></div>
       <button type="button" id="logoutBtn">ออกจากระบบ</button>
     </header>
 
@@ -159,15 +155,23 @@
       if (cfg.ok && cfg.event_name) $all('.js-event-name').forEach(function (el) { el.textContent = cfg.event_name; });
     });
 
-    try { $('#station').value = localStorage.getItem('pe_station') || ''; } catch (e) {}
+    // ชื่อเครื่องสแกน: สุ่มให้ครั้งแรกแล้วจำไว้ในเครื่อง (เช่น Staff-3F2A) กดที่ชื่อมุมบนเพื่อเปลี่ยนได้
+    function deviceName() {
+      let n = '';
+      try { n = localStorage.getItem('pe_station') || ''; } catch (e) {}
+      if (!n) {
+        n = 'Staff-' + Math.random().toString(16).slice(2, 6).toUpperCase();
+        try { localStorage.setItem('pe_station', n); } catch (e) {}
+      }
+      return n;
+    }
 
     // ---------- Login ----------
     $('#loginForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-      const station = $('#station').value.trim();
+      const station = deviceName();
       const password = $('#password').value;
       const errBox = $('#loginError');
-      if (!station) { errBox.textContent = 'กรุณาตั้งชื่อจุดสแกน เช่น จุด 1'; errBox.hidden = false; return; }
       if (!password) { errBox.textContent = 'กรุณากรอกรหัส Staff'; errBox.hidden = false; return; }
       const btn = $('#loginBtn');
       btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
@@ -176,7 +180,6 @@
       if (!res.ok) { errBox.textContent = res.error; errBox.hidden = false; return; }
       errBox.hidden = true;
       $('#password').value = '';
-      try { localStorage.setItem('pe_station', station); } catch (e2) {}
       sess = { token: res.token, station: res.station, expires_at: res.expires_at };
       saveSession(SKEY, sess);
       enterApp();
@@ -185,7 +188,7 @@
     function enterApp() {
       $('#loginView').hidden = true;
       $('#appView').hidden = false;
-      $('#stationLabel').textContent = sess.station;
+      $('#stationLabel').textContent = deviceName() + ' ✎';
       showView('scan');
     }
 
@@ -201,9 +204,27 @@
     }
     $('#logoutBtn').addEventListener('click', function () { logout(); });
 
+    // เปลี่ยนชื่อเครื่อง (เช่น "ประตู 1") ชื่อนี้จะแสดงในการ์ดเหลืองว่าใครเช็คอินให้
+    $('#stationLabel').addEventListener('click', function () {
+      pauseScanner();
+      const ov = openSheet('<div class="sheet-head plain">ชื่อเครื่องสแกนนี้</div>' +
+        '<form class="sheet-body" id="nameForm"><div class="field"><input type="text" id="nameInput" maxlength="40" value="' + esc(deviceName()) + '"></div>' +
+        '<p class="muted" style="font-size:13px;margin:-6px 0 12px">ชื่อนี้จะขึ้นในการ์ดสีเหลืองว่าเช็คอินที่เครื่องไหน เช่น "ประตู 1"</p>' +
+        '<div class="btn-row"><button type="button" class="btn btn-ghost" data-close>ยกเลิก</button><button class="btn btn-primary">บันทึก</button></div></form>',
+        resumeScanner);
+      $('[data-close]', ov).addEventListener('click', closeSheet);
+      $('#nameForm', ov).addEventListener('submit', function (e) {
+        e.preventDefault();
+        const v = $('#nameInput', ov).value.trim();
+        if (v) { try { localStorage.setItem('pe_station', v); } catch (e2) {} }
+        $('#stationLabel').textContent = deviceName() + ' ✎';
+        closeSheet();
+      });
+    });
+
     // เรียก API ที่ต้องล็อกอิน ถ้า token หมดอายุให้กลับไปหน้า login
     async function authed(action, data) {
-      const res = await api(action, Object.assign({ token: sess && sess.token, device: deviceLabel(sess ? sess.station : '') }, data));
+      const res = await api(action, Object.assign({ token: sess && sess.token, station_name: deviceName(), device: deviceLabel(deviceName()) }, data));
       if (res.auth === false) logout('หมดเวลาการใช้งาน กรุณาเข้าสู่ระบบใหม่');
       return res;
     }

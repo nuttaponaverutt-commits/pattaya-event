@@ -2,111 +2,203 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Registration | Wine &amp; Spirits Discovery 2026</title>
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b0a08">
+  <meta name="description" content="Discover A World of Flavours · Wine & Spirits Discovery 2026 presented by Makro · Friday 6 November 2026 · Cape Dara Resort Pattaya">
+  <!-- ภาพตอนแชร์ลิงก์ (LINE / Facebook) ใช้ KV -->
+  <meta property="og:title" content="Discover A World of Flavours · Wine & Spirits Discovery 2026">
+  <meta property="og:description" content="Friday 6 November 2026 · 5.00 – 9.00 PM · Vela Grand Ballroom, Cape Dara Resort Pattaya">
+  <meta property="og:image" content="https://nuttaponaverutt-commits.github.io/pattaya-event/assets/kv.jpg">
+  <meta property="og:type" content="website">
+  <script>document.documentElement.classList.add('js');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400;1,6..96,500&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/hero.jpg">
+  <link rel="stylesheet" href="assets/landing.css">
 </head>
 <body>
-  <header class="topbar">
+  <!-- ถามอายุก่อนเข้าเว็บ (จำไว้ 30 วัน) -->
+  <div class="age-gate" id="ageGate" hidden>
+    <div class="age-box">
+      <p class="kicker">Wine &amp; Spirits Discovery 2026</p>
+      <h2 data-i18n="age.title">Are you 20 years of age or older?</h2>
+      <p data-i18n="age.sub">This website contains information about alcoholic beverages.</p>
+      <div class="age-actions">
+        <button type="button" class="btn btn-primary" id="ageYes" data-i18n="age.yes">Yes, I am 20+</button>
+        <button type="button" class="btn btn-glass" id="ageNo" data-i18n="age.no">No</button>
+      </div>
+      <p class="age-no" id="ageDenied" data-i18n="age.denied" hidden>Sorry, this event is for guests aged 20 and over only.</p>
+      <span class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="th">TH</button></span>
+    </div>
+  </div>
+
+  <header class="nav" id="nav">
     <div class="wrap">
-      <span class="js-event-name">Wine &amp; Spirits Discovery 2026</span>
-      <span class="topbar-right">
+      <a class="brand" href="#top"><b>Makro</b> · Wine &amp; Spirits Discovery</a>
+      <span class="nav-right">
         <span class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="th">TH</button></span>
-        <a href="myqr.html" data-i18n="nav.myqr">My QR</a>
+        <a class="nav-link" href="myqr.html" data-i18n="nav.myqr">My QR</a>
       </span>
     </div>
   </header>
 
-  <!-- เปลี่ยน KV: วางไฟล์ docs/assets/kv.jpg แล้วรูปจะขึ้นแทน placeholder เอง -->
-  <div id="hero" class="hero hero-placeholder">Key Visual</div>
-
   <main id="landing">
-    <div class="narrow">
-      <section class="event">
-        <div class="invite" id="inviteTier" hidden></div>
-        <h1 class="js-event-name">Wine &amp; Spirits Discovery 2026</h1>
+    <!-- Hero -->
+    <section class="hero" id="top">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="sparkles" id="sparkles" aria-hidden="true"></div>
+      <div class="wrap hero-inner">
+        <div class="invite-badge" id="inviteBadge" hidden><b id="inviteTier">VIP</b><span data-i18n="invite.you">You're invited</span></div>
+        <p class="eyebrow" data-i18n="hero.eyebrow">Makro presents · Wine &amp; Spirits Discovery 2026</p>
+        <h1><span class="line"><span><em>Discover</em></span></span><span class="line"><span>A World</span></span><span class="line"><span>of Flavours</span></span></h1>
         <p class="tagline">Sip &bull; Discover &bull; Connect</p>
-        <div class="meta">
-          <span><span data-i18n="ev.date">Date</span> <b id="eventDate" data-i18n="ev.tbc">To be announced</b></span>
-          <span><span data-i18n="ev.time">Time</span> <b id="eventTime">-</b></span>
-          <span><span data-i18n="ev.venue">Venue</span> <b id="eventVenue">Cape Dara Resort Pattaya</b></span>
+        <div class="chips">
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="eventDate">Friday 6 November 2026</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="eventTime">5.00 – 9.00 PM</span></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Cape Dara Resort Pattaya</span></span>
         </div>
-        <div class="actions" id="openActions">
-          <a href="#register" class="btn btn-primary btn-block" id="ctaRegister" data-i18n="cta.register">Register now</a>
-          <a href="myqr.html" class="btn btn-outline btn-block" data-i18n="cta.myqr">Already registered? View my QR</a>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#register"><span data-i18n="cta.register">Register now</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-glass js-map" href="https://www.google.com/maps/search/?api=1&amp;query=Cape+Dara+Resort+Pattaya" target="_blank" rel="noopener"><span data-i18n="hero.directions">Get directions</span></a>
         </div>
-        <!-- แสดงแทนฟอร์มเมื่อที่นั่งเต็มหรือปิดรับ (ข้อความแก้ได้จากหลังบ้าน) -->
-        <div class="closed-panel" id="closedPanel" hidden>
-          <h2 id="closedTitle"></h2>
-          <div id="closedBody"></div>
-          <a href="myqr.html" class="btn btn-primary btn-block" data-i18n="nav.myqr">My QR</a>
+      </div>
+      <span class="scroll-cue" aria-hidden="true"></span>
+    </section>
+
+    <!-- The Experience -->
+    <section class="section" id="experience">
+      <div class="wrap">
+        <p class="kicker reveal" data-i18n="xp.kicker">The Experience</p>
+        <p class="glow-text" id="glowText"></p>
+        <div class="xp-grid">
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h14l-6 8v6l3 2H8l3-2v-6z"/></svg></div><h3 data-i18n="xp.1.t">Makro Bar</h3><p data-i18n="xp.1.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8"/></svg></div><h3 data-i18n="xp.2.t">Bartenders</h3><p data-i18n="xp.2.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3h8v5a4 4 0 0 1-8 0zM12 12v9M9 21h6"/></svg></div><h3 data-i18n="xp.3.t">Sommelier</h3><p data-i18n="xp.3.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l2-5h14l2 5M4 9h16v11H4zM9 20v-6h6v6"/></svg></div><h3 data-i18n="xp.4.t">Discovery Booths</h3><p data-i18n="xp.4.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 13h16a8 8 0 0 1-16 0zM12 5v3M8 6l1 2M16 6l-1 2"/></svg></div><h3 data-i18n="xp.5.t">Cocktail Food</h3><p data-i18n="xp.5.d"></p></article>
+          <article class="xp reveal"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10h16v10H4zM2 7h20v3H2zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></svg></div><h3 data-i18n="xp.6.t">Lucky Draw &amp; DJ</h3><p data-i18n="xp.6.d"></p></article>
         </div>
-        <p class="notice" data-i18n="notice.age">This event is for guests aged 20 and over.</p>
-      </section>
+      </div>
+    </section>
 
-      <section class="section" id="register">
-        <h2 data-i18n="reg.title">Registration</h2>
-        <p class="sub" data-i18n="reg.sub">Complete the form below to receive your entry QR code.</p>
+    <!-- Agenda -->
+    <section class="section" id="agenda" style="padding-top:0">
+      <div class="wrap">
+        <p class="kicker reveal" data-i18n="ag.kicker">Agenda</p>
+        <h2 class="reveal" data-i18n="ag.title">The evening</h2>
+        <ol class="timeline">
+          <li class="reveal"><span class="time">17:00</span><span class="what" data-i18n="ag.1"></span></li>
+          <li class="reveal"><span class="time">18:00</span><span class="what" data-i18n="ag.2"></span></li>
+          <li class="reveal"><span class="time">18:40</span><span class="what" data-i18n="ag.3"></span></li>
+          <li class="reveal hl"><span class="time">19:20</span><span class="what" data-i18n="ag.4"></span></li>
+          <li class="reveal hl"><span class="time">20:10</span><span class="what" data-i18n="ag.5"></span></li>
+          <li class="reveal"><span class="time">21:00</span><span class="what" data-i18n="ag.6"></span></li>
+        </ol>
+        <p class="lead reveal" style="margin-top:16px;font-size:14px" data-i18n="ag.note">The agenda may change.</p>
+      </div>
+    </section>
 
-        <div id="closedBox" class="alert" hidden></div>
-        <div id="loadingBox" class="loading" data-i18n="loading">Loading...</div>
+    <!-- Venue -->
+    <section class="section" id="venue" style="padding-top:0">
+      <div class="wrap venue">
+        <div class="reveal">
+          <p class="kicker" data-i18n="venue.kicker">Venue</p>
+          <h2>Vela Grand Ballroom</h2>
+          <p class="lead" data-i18n="venue.lead">Registration opens at 5.00 PM.</p>
+        </div>
+        <div class="venue-card reveal">
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b id="venueText">Vela Grand Ballroom, 2nd Floor</b><span>Cape Dara Resort Pattaya</span></div></div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><div><b id="venueDate">Friday 6 November 2026</b><span id="venueTime">5.00 – 9.00 PM</span></div></div>
+          <div class="venue-actions">
+            <a class="btn btn-gold js-map" href="https://www.google.com/maps/search/?api=1&amp;query=Cape+Dara+Resort+Pattaya" target="_blank" rel="noopener" data-i18n="venue.map">Open in Google Maps</a>
+            <button type="button" class="btn btn-glass js-cal" data-i18n="venue.cal">Add to calendar</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <form id="regForm" class="panel" novalidate hidden>
-          <div id="formError" class="alert" hidden></div>
-
-          <div class="field" data-f="full_name">
-            <label for="full_name"><span data-i18n="f.name">Full name</span><span class="req">*</span></label>
-            <input type="text" id="full_name" name="full_name" autocomplete="name" maxlength="100">
-            <div class="err" data-i18n="f.name.err">Please enter your full name</div>
+    <!-- Register -->
+    <section class="section" id="register" style="padding-top:0">
+      <div class="wrap reg-wrap">
+        <div class="reveal">
+          <p class="kicker" data-i18n="reg.kicker">Register</p>
+          <h2 data-i18n="reg.heading">Reserve your place</h2>
+          <p class="lead" data-i18n="reg.lead">Complete the form to receive your personal entry QR code.</p>
+        </div>
+        <div class="panel reveal">
+          <div id="loadingBox" class="loading"><div class="skel"></div><div class="skel"></div><div class="skel" style="height:110px"></div></div>
+          <div id="closedBox" class="alert" hidden></div>
+          <!-- แสดงแทนฟอร์มเมื่อที่นั่งเต็มหรือปิดรับ (ข้อความแก้ได้จากหลังบ้าน) -->
+          <div class="closed-panel" id="closedPanel" hidden>
+            <h3 id="closedTitle"></h3>
+            <div id="closedBody"></div>
+            <a href="myqr.html" class="btn btn-primary" data-i18n="nav.myqr">My QR</a>
           </div>
 
-          <div class="field" data-f="phone">
-            <label for="phone"><span data-i18n="f.phone">Mobile number</span><span class="req">*</span></label>
-            <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
-            <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
-          </div>
-
-          <div class="field" data-f="mmid">
-            <label for="mmid"><span data-i18n="f.mmid">MMID</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
-            <input type="text" id="mmid" name="mmid" maxlength="30" autocomplete="off">
-            <div class="help" data-i18n="f.mmid.help">Your Makro membership number</div>
-          </div>
-
-          <div class="field" data-f="company">
-            <label for="company"><span data-i18n="f.company">Shop / Company name</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
-            <input type="text" id="company" name="company" maxlength="100" autocomplete="organization">
-          </div>
-
-          <label class="check" data-f="age20">
-            <input type="checkbox" id="age20">
-            <span><span data-i18n="f.age20">I confirm that I am 20 years of age or older.</span><span class="req">*</span></span>
-          </label>
-
-          <label class="check" data-f="pdpa">
-            <input type="checkbox" id="pdpa">
-            <span><span data-i18n="f.pdpa">I consent to the organiser collecting and using my data.</span><span class="req">*</span></span>
-          </label>
-
-          <button type="submit" class="btn btn-primary btn-block" id="submitBtn" data-i18n="f.submit">Submit registration</button>
-        </form>
-      </section>
-    </div>
+          <form id="regForm" novalidate hidden>
+            <div id="formError" class="alert" hidden></div>
+            <div class="field" data-f="full_name">
+              <label for="full_name"><span data-i18n="f.name">Full name</span><span class="req">*</span></label>
+              <input type="text" id="full_name" name="full_name" autocomplete="name" maxlength="100">
+              <div class="err" data-i18n="f.name.err">Please enter your full name</div>
+            </div>
+            <div class="field" data-f="phone">
+              <label for="phone"><span data-i18n="f.phone">Mobile number</span><span class="req">*</span></label>
+              <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
+              <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
+            </div>
+            <div class="field" data-f="mmid">
+              <label for="mmid"><span data-i18n="f.mmid">Makro membership number</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
+              <input type="text" id="mmid" name="mmid" inputmode="numeric" maxlength="30" autocomplete="off">
+              <div class="help" data-i18n="f.mmid.help">Shown on your Makro member card</div>
+            </div>
+            <div class="field" data-f="company">
+              <label for="company"><span data-i18n="f.company">Shop / Company name</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
+              <input type="text" id="company" name="company" maxlength="100" autocomplete="organization">
+            </div>
+            <label class="check" data-f="age20">
+              <input type="checkbox" id="age20">
+              <span><span data-i18n="f.age20">I confirm that I am 20 years of age or older.</span><span class="req">*</span></span>
+            </label>
+            <label class="check" data-f="pdpa">
+              <input type="checkbox" id="pdpa">
+              <span><span data-i18n="f.pdpa">I consent to the organiser using my information for this event.</span><span class="req">*</span>
+                <button type="button" class="more" id="pdpaMore" data-i18n="f.pdpa.more">Read more</button>
+                <span class="pdpa-full" id="pdpaFull" data-i18n="f.pdpa.full" hidden></span></span>
+            </label>
+            <button type="submit" class="btn btn-primary btn-block" id="submitBtn" data-i18n="f.submit">Submit registration</button>
+          </form>
+        </div>
+      </div>
+    </section>
   </main>
 
   <main id="resultView" hidden>
-    <div class="narrow section result">
+    <div class="wrap result">
       <h2 id="resultTitle"></h2>
       <p class="sub" id="resultSub"></p>
       <div id="qrHost"></div>
+      <div class="result-actions">
+        <div class="row">
+          <button type="button" class="btn btn-glass js-cal" data-i18n="venue.cal">Add to calendar</button>
+          <a class="btn btn-glass js-map" href="https://www.google.com/maps/search/?api=1&amp;query=Cape+Dara+Resort+Pattaya" target="_blank" rel="noopener" data-i18n="hero.directions">Get directions</a>
+        </div>
+      </div>
       <div class="links"><a href="./" data-i18n="res.home">Back to home</a></div>
     </div>
   </main>
 
-  <footer>&copy; <span class="js-event-name">Wine &amp; Spirits Discovery 2026</span></footer>
+  <footer>
+    <div class="wrap">
+      <span class="presented"><span data-i18n="footer.presented">Presented by</span> <b>makro</b></span>
+      <span data-i18n="notice.age">This event is for guests aged 20 and over.</span>
+    </div>
+  </footer>
+
+  <div class="sticky-cta" id="stickyCta"><a class="btn btn-primary" href="#register" data-i18n="sticky.register">Register now</a></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script src="assets/config.js"></script>
@@ -116,12 +208,110 @@
     const params = new URLSearchParams(location.search);
     const isWalkin = params.get('src') === 'walkin';
     const inviteCode = params.get('inv') || '';
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let cfgRaw = null;      // ข้อมูลงานจากระบบ
-    let lastResult = null;  // ผลลงทะเบียนล่าสุด (ใช้วาดการ์ดใหม่เมื่อเปลี่ยนภาษา)
+    let lastResult = null;  // ผลลงทะเบียนล่าสุด (วาดการ์ดใหม่เมื่อเปลี่ยนภาษา)
 
-    loadHero(document.getElementById('hero'));
+    // ---------- ถามอายุ ----------
+    (function ageGate() {
+      let ok = false;
+      try { ok = Number(localStorage.getItem('pe_age_ok') || 0) > Date.now(); } catch (e) {}
+      if (ok) return;
+      const g = document.getElementById('ageGate');
+      g.hidden = false;
+      document.body.style.overflow = 'hidden';
+      document.getElementById('ageYes').addEventListener('click', function () {
+        try { localStorage.setItem('pe_age_ok', String(Date.now() + 30 * 864e5)); } catch (e) {}
+        g.hidden = true;
+        document.body.style.overflow = '';
+      });
+      document.getElementById('ageNo').addEventListener('click', function () {
+        document.getElementById('ageDenied').hidden = false;
+      });
+    })();
+
     initLangToggle(render);
 
+    // ---------- แอนิเมชัน ----------
+    (function sparkles() {
+      if (reduceMotion) return;
+      const box = document.getElementById('sparkles');
+      for (let i = 0; i < 22; i++) {
+        const s = document.createElement('i');
+        s.style.left = (20 + Math.random() * 75) + '%';
+        s.style.top = (30 + Math.random() * 55) + '%';
+        const size = 3 + Math.random() * 7;
+        s.style.width = s.style.height = size + 'px';
+        s.style.animationDelay = (Math.random() * 6).toFixed(2) + 's';
+        s.style.animationDuration = (4 + Math.random() * 5).toFixed(2) + 's';
+        box.appendChild(s);
+      }
+    })();
+
+    const nav = document.getElementById('nav');
+    const sticky = document.getElementById('stickyCta');
+    const registerSec = document.getElementById('register');
+    function onScroll() {
+      nav.classList.toggle('solid', window.scrollY > 40);
+      const r = registerSec.getBoundingClientRect();
+      const formVisible = r.top < window.innerHeight && r.bottom > 0;
+      sticky.classList.toggle('show', window.scrollY > window.innerHeight * .7 && !formVisible && !document.getElementById('landing').hidden);
+      glowUpdate();
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { rootMargin: '0px 0px -10% 0px' }) : null;
+    document.querySelectorAll('.reveal').forEach(function (el) { io ? io.observe(el) : el.classList.add('in'); });
+
+    // ประโยคที่ค่อยๆ สว่างทีละคำตามการเลื่อนหน้า
+    const glow = document.getElementById('glowText');
+    function buildGlow() {
+      glow.textContent = '';
+      t('xp.glow').split(' ').forEach(function (w, i, arr) {
+        const s = document.createElement('span');
+        s.className = 'w';
+        s.textContent = w + (i < arr.length - 1 ? ' ' : '');
+        glow.appendChild(s);
+      });
+      glowUpdate();
+    }
+    function glowUpdate() {
+      const words = glow.querySelectorAll('.w');
+      if (!words.length) return;
+      if (reduceMotion) { words.forEach(function (w) { w.classList.add('on'); }); return; }
+      const r = glow.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (window.innerHeight * .85 - r.top) / (window.innerHeight * .5)));
+      const n = Math.round(p * words.length);
+      words.forEach(function (w, i) { w.classList.toggle('on', i < n); });
+    }
+
+    // ---------- ปฏิทิน (.ics) ----------
+    document.querySelectorAll('.js-cal').forEach(function (b) {
+      b.addEventListener('click', function () {
+        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Makro//Wine & Spirits Discovery 2026//EN', 'BEGIN:VEVENT',
+          'UID:wsd2026-pattaya@makro', 'DTSTAMP:20261015T000000Z',
+          'DTSTART:20261106T100000Z', 'DTEND:20261106T140000Z',
+          'SUMMARY:Wine & Spirits Discovery 2026 (Makro)',
+          'LOCATION:Vela Grand Ballroom\\, 2nd Floor\\, Cape Dara Resort Pattaya',
+          'DESCRIPTION:Discover A World of Flavours. Registration opens 5.00 PM. Please bring your ID card and entry QR.',
+          'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+        a.download = 'wine-spirits-discovery-2026.ics';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+      });
+    });
+
+    document.getElementById('pdpaMore').addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      const f = document.getElementById('pdpaFull');
+      f.hidden = !f.hidden;
+    });
+
+    // ---------- ข้อมูลงาน ----------
     (async function init() {
       const cfg = await api('config', { inv: inviteCode });
       document.getElementById('loadingBox').hidden = true;
@@ -130,22 +320,21 @@
       render();
       if (!cfg.registration_open) return;
       document.getElementById('regForm').hidden = false;
-      if (isWalkin) document.getElementById('register').scrollIntoView();
+      if (isWalkin) registerSec.scrollIntoView();
     })();
 
     // วาดข้อความที่ขึ้นกับภาษาและข้อมูลจากระบบ (เรียกซ้ำเมื่อสลับ EN / TH)
     function render() {
       document.title = t('title.reg') + ' | Wine & Spirits Discovery 2026';
+      buildGlow();
       if (!cfgRaw) return;
       const ev = eventInfoFor(cfgRaw);
-      if (ev.event_name) document.querySelectorAll('.js-event-name').forEach(function (el) { el.textContent = ev.event_name; });
-      if (ev.event_date) document.getElementById('eventDate').textContent = ev.event_date_text;
-      if (ev.event_time) document.getElementById('eventTime').textContent = ev.event_time;
-      if (ev.event_venue) document.getElementById('eventVenue').textContent = ev.event_venue;
+      if (ev.event_date) { document.getElementById('eventDate').textContent = ev.event_date_text; document.getElementById('venueDate').textContent = ev.event_date_text; }
+      if (ev.event_time) { document.getElementById('eventTime').textContent = ev.event_time; document.getElementById('venueTime').textContent = ev.event_time; }
+      if (ev.event_venue) document.getElementById('venueText').textContent = ev.event_venue.split(',').slice(0, -1).join(',') || ev.event_venue;
       if (ev.tier === 'VVIP' || ev.tier === 'VIP') {
-        const box = document.getElementById('inviteTier');
-        box.innerHTML = '<span class="tier-pill tier-' + ev.tier + '">' + t('invite', { tier: ev.tier }) + '</span>';
-        box.hidden = false;
+        document.getElementById('inviteTier').textContent = ev.tier;
+        document.getElementById('inviteBadge').hidden = false;
       }
       if (!cfgRaw.registration_open) showClosedPanel(cfgRaw);
       if (lastResult) showResult(lastResult);
@@ -157,15 +346,13 @@
       const en = LANG === 'en';
       const title = en ? (cfg.closed_title_en || t('closed.' + kind + '.title')) : (cfg.closed_title || t('closed.' + kind + '.title'));
       const bodyText = en ? (cfg.closed_body_en || t('closed.' + kind + '.body')) : (cfg.closed_body || t('closed.' + kind + '.body'));
-      document.getElementById('openActions').hidden = true;
-      document.getElementById('register').hidden = true;
+      document.getElementById('regForm').hidden = true;
       document.getElementById('closedTitle').textContent = title;
       const body = document.getElementById('closedBody');
       body.textContent = '';
       String(bodyText).split('\n').filter(function (l) { return l.trim(); }).forEach(function (line) {
         const p = document.createElement('p');
         p.textContent = line.trim();
-        // ภาษาไทยแสดงบรรทัดภาษาอังกฤษเป็นตัวเอียงทอง ภาษาอังกฤษแสดงปกติ
         if (!en && !/[฀-๿]/.test(line)) p.className = 'en';
         body.appendChild(p);
       });
@@ -184,6 +371,7 @@
       await showQrCard(document.getElementById('qrHost'), Object.assign(eventInfoFor(cfgRaw || {}), res));
     }
 
+    // ---------- ฟอร์ม ----------
     const form = document.getElementById('regForm');
     form.addEventListener('input', function (e) {
       const f = e.target.closest('[data-f]');
@@ -237,11 +425,15 @@
       saveMyReg(res);
       lastResult = res;
       document.getElementById('landing').hidden = true;
-      document.getElementById('hero').hidden = true;
       document.getElementById('resultView').hidden = false;
+      sticky.classList.remove('show');
+      nav.classList.add('solid');
       window.scrollTo(0, 0);
       await showResult(res);
     });
+
+    buildGlow();
+    onScroll();
   </script>
 </body>
 </html>
