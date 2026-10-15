@@ -100,6 +100,8 @@ Agenda (ข้อมูลภายใน ไม่แสดงบนหน้�
 
 - index.html / myqr.html ใช้ `docs/assets/landing.css` (โทนมืด-ทอง แรงบันดาลใจ mosa-ai-v1.21st.app) แยกจาก style.css ของ Staff/หลังบ้าน
 - หน้าถามอายุ 20+ (จำ 30 วัน: localStorage `pe_age_ok`) · Hero เต็มจอจากภาพ `assets/hero.jpg` (ภาพค็อกเทลไม่มีตัวหนังสือ) + Ken Burns + ประกายแสง (CSS) · หัวข้อเลื่อนขึ้นทีละบรรทัด · ส่วน The Experience (ประโยคสว่างทีละคำตามการเลื่อน + การ์ด 6 ใบ) · กำหนดการ · สถานที่ (Google Maps + Add to calendar .ics) · ฟอร์มการ์ดกระจก (PDPA ย่อ + อ่านเพิ่ม) · ปุ่มลงทะเบียนลอยบนมือถือ · KV เป็น og:image
+- **ลิงก์เดียว (15 ต.ค., commit b110e08):** หน้า "ลิงก์ลงทะเบียน" ในหลังบ้านแสดงแค่ลิงก์ทั่วไป ตามที่เจ้าของสั่ง กลุ่ม VVIP/VIP มาจากรายชื่อลูกค้า (Customers: invited + tier) เท่านั้น ไม่ต้องการแยก Online / Walk-in · ลิงก์ `?inv=` และ `?src=walkin` เดิมยังใช้ได้ (backend ไม่ได้แก้) แค่ไม่แสดง
+- คู่มือการใช้งาน: https://claude.ai/artifact/QnbpewPYWUY6NEbLXwoXcQ (ไฟล์ต้นฉบับ `HOWTO.html` อยู่ในเครื่อง ไม่ขึ้น git) แก้ระบบแล้วอัปเดตคู่มือด้วย
 - **ลงทะเบียนเร็วขึ้น (15 ต.ค., commit 81285eb, deploy @11):** ก่อนแก้ 3–13 วินาที หลังแก้ 2–4 วินาที (วัดด้วยเบอร์ที่ลงไว้แล้ว)
   - `prepareRegistration_` ใช้ `getSettingsCached_` (30 วินาที) และ `customerIndexCached_` (รายชื่อลูกค้าใน CacheService แบ่งชิ้นละ 30k ตัวอักษร เก็บ 5 นาที คีย์ `cust_n`, `cust_0..`)
   - `clearConfigCache_` ล้าง `cust_n` ด้วย, `writeCustomers_` ล้าง cache หลังเขียนเสร็จ
