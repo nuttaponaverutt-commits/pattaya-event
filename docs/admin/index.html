@@ -277,7 +277,7 @@
         <!-- Links -->
         <section data-view="links" hidden>
           <div class="view-head"><h2>ลิงก์ลงทะเบียน</h2></div>
-          <p class="muted" style="font-size:14px;margin:-6px 0 16px">ส่งลิงก์ให้ตรงกลุ่ม ระบบจะบันทึกกลุ่มให้เอง ลิงก์ VVIP / VIP มีรหัสเฉพาะ เดาไม่ได้ ถ้าลิงก์หลุด ให้เปลี่ยนรหัสในแท็บ Settings (invite_code_vvip / invite_code_vip) ลิงก์เก่าจะกลายเป็น Walk-in</p>
+          <p class="muted" style="font-size:14px;margin:-6px 0 16px">ใช้ลิงก์นี้ลิงก์เดียวกับลูกค้าทุกกลุ่ม ระบบให้กลุ่ม VVIP / VIP ตามรายชื่อลูกค้าที่อัปโหลดไว้ (จับคู่จากหมายเลขสมาชิก Makro / เบอร์โทร / ชื่อ) คนที่ไม่อยู่ในรายชื่อเป็น Walk-in ถ้ากลุ่มผิด แก้ได้ที่หน้า ผู้ลงทะเบียน</p>
           <div class="link-list" id="linkList"><div class="muted">กำลังโหลด...</div></div>
           <div class="card" style="margin-top:16px">
             <h3>Lucky Draw</h3>
@@ -534,14 +534,12 @@
       if (!sess) return;
       if (!res.ok) { toast(res.error, true); return; }
       const base = new URL('../', location.href).href;
+      // ใช้ลิงก์เดียวทุกกลุ่ม กลุ่มมาจากรายชื่อลูกค้า (ลิงก์ ?inv= และ ?src=walkin เดิมยังใช้ได้ แค่ไม่แสดงที่นี่)
       const rows = [
-        ['VVIP', 'ลิงก์เชิญ VVIP', res.vvip ? base + '?inv=' + res.vvip : ''],
-        ['VIP', 'ลิงก์เชิญ VIP', res.vip ? base + '?inv=' + res.vip : ''],
-        ['Walk-in', 'ลิงก์ทั่วไป (PR / โซเชียล)', base],
-        ['Walk-in', 'ลิงก์หน้างาน (โปสเตอร์ Walk-in)', base + '?src=walkin']
+        ['', 'ลิงก์ลงทะเบียน', base]
       ];
       $('#linkList').innerHTML = rows.map(function (r, i) {
-        return '<div class="link-row"><div class="head"><span>' + tierPill(r[0]) + ' <b>' + esc(r[1]) + '</b></span>' +
+        return '<div class="link-row"><div class="head"><span>' + (r[0] ? tierPill(r[0]) + ' ' : '') + '<b>' + esc(r[1]) + '</b></span>' +
           (r[2] ? '<span class="btn-row" style="flex:none"><button type="button" class="btn btn-ghost btn-sm" data-copy="' + i + '">คัดลอก</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-qr="' + i + '">QR โปสเตอร์</button></span>' : '') + '</div>' +
           (r[2] ? '<div class="url">' + esc(r[2]) + '</div>' : '<div class="muted">ยังไม่มีรหัส กรุณารัน setup ใน Apps Script</div>') + '</div>';
@@ -561,7 +559,7 @@
           const url = qr.createDataURL(12, 4);
           const ov = openSheet('<div class="sheet-head plain">QR ' + esc(r[1]) + '<small>' + esc(r[2]) + '</small></div>' +
             '<div class="sheet-body" style="text-align:center"><img src="' + url + '" alt="QR" style="width:100%;max-width:320px"></div>' +
-            '<div class="sheet-foot"><a class="btn btn-primary btn-block" href="' + url + '" download="QR-' + esc(r[0]) + '-' + (+b.dataset.qr + 1) + '.gif">ดาวน์โหลดรูป QR</a>' +
+            '<div class="sheet-foot"><a class="btn btn-primary btn-block" href="' + url + '" download="QR-Wine-Spirits-Discovery-2026.gif">ดาวน์โหลดรูป QR</a>' +
             '<button class="btn btn-ghost btn-block" data-close>ปิด</button></div>');
           $('[data-close]', ov).addEventListener('click', closeSheet);
         });
