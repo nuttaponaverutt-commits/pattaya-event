@@ -436,8 +436,9 @@ function tierFromCode_(s, code) {
 
 // งานที่ไม่ต้องล็อก (อ่าน Settings และรายชื่อ Sales) ทำก่อนเข้าคิว ให้แต่ละคนถือล็อกสั้นที่สุด
 function prepareRegistration_(f) {
-  const s = getSettings_();
-  return { s: s, match: matchCustomer_(customerIndex_(), f) };
+  // ใช้ค่าที่จำไว้ (Settings 30 วินาที, รายชื่อลูกค้า 5 นาที) แก้จากหลังบ้านแล้วล้างทันที
+  const s = getSettingsCached_();
+  return { s: s, match: matchCustomer_(customerIndexCached_(), f) };
 }
 
 // กลุ่มที่สูงกว่า (VVIP > VIP > Walk-in)
@@ -635,11 +636,14 @@ function countCached_() {
 function appendRecord_(t, rec) {
   const row = t.sh.getLastRow() + 1;
   const range = t.sh.getRange(row, 1, 1, t.h.length);
-  t.sh.getRange(row, t.col.phone + 1).setNumberFormat('@');
-  t.sh.getRange(row, t.col.mmid + 1).setNumberFormat('@');
-  // รหัสอย่าง 2E345 จะถูกแปลงเป็นตัวเลขถ้าไม่ตั้งเป็น text
-  if (t.col.short_code !== undefined) t.sh.getRange(row, t.col.short_code + 1).setNumberFormat('@');
-  if (t.col.cust_no !== undefined) t.sh.getRange(row, t.col.cust_no + 1).setNumberFormat('@');
+  // setup() ตั้งคอลัมน์เหล่านี้เป็น text ไว้ล่วงหน้าแล้ว ถ้าแถวเกินที่ตั้งไว้ค่อยตั้งทีละช่อง
+  if (row > Number(PropertiesService.getScriptProperties().getProperty('REG_TEXT_ROWS') || 0)) {
+    t.sh.getRange(row, t.col.phone + 1).setNumberFormat('@');
+    t.sh.getRange(row, t.col.mmid + 1).setNumberFormat('@');
+    // รหัสอย่าง 2E345 จะถูกแปลงเป็นตัวเลขถ้าไม่ตั้งเป็น text
+    if (t.col.short_code !== undefined) t.sh.getRange(row, t.col.short_code + 1).setNumberFormat('@');
+    if (t.col.cust_no !== undefined) t.sh.getRange(row, t.col.cust_no + 1).setNumberFormat('@');
+  }
   range.setValues([t.h.map(function (name) { return safe_(rec[name]); })]);
   rec._row = row;
   t.records.push(rec);

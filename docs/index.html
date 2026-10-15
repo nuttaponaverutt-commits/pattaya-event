@@ -404,7 +404,7 @@
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.textContent = t('f.sending');
-      const slowTimer = setTimeout(function () { btn.textContent = t('f.slow'); }, 8000);
+      const slowTimer = setTimeout(function () { btn.textContent = t('f.slow'); }, 15000);
       const res = await api('register', data);
       clearTimeout(slowTimer);
       btn.disabled = false;

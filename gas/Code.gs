@@ -74,10 +74,13 @@ function setup() {
 
   // phone และ mmid เป็น text เพื่อไม่ให้เลข 0 นำหน้าหาย
   const reg = ss.getSheetByName('Registrations');
+  if (reg.getMaxRows() < 2000) reg.insertRowsAfter(reg.getMaxRows(), 2000 - reg.getMaxRows());
   const regHead = reg.getRange(1, 1, 1, reg.getLastColumn()).getValues()[0].map(String);
   ['phone', 'mmid', 'short_code', 'cust_no'].forEach(function (col) {
     reg.getRange(1, regHead.indexOf(col) + 1, reg.getMaxRows(), 1).setNumberFormat('@');
   });
+  // จำไว้ว่าตั้งเป็น text ถึงแถวไหนแล้ว ตอนลงทะเบียนจะได้ไม่ต้องตั้งทีละช่อง (เขียนเร็วขึ้น)
+  PropertiesService.getScriptProperties().setProperty('REG_TEXT_ROWS', String(reg.getMaxRows()));
   const cus = ss.getSheetByName('Customers');
   ['mmid', 'cust_no', 'phone', 'sales_code'].forEach(function (col) {
     cus.getRange(1, SHEETS.Customers.indexOf(col) + 1, cus.getMaxRows(), 1).setNumberFormat('@');

@@ -64,7 +64,52 @@ function companyKey_(s) {
 }
 
 function customerIndex_() {
-  const c = readCustomers_();
+  return buildCustomerIndex_(readCustomers_().rows);
+}
+
+// ใช้ตอนลูกค้าลงทะเบียน: เก็บรายชื่อลูกค้า (เฉพาะช่องที่ใช้จับคู่) ใน cache 5 นาที ไม่ต้องอ่านทั้งชีตทุกครั้ง
+// cache เก็บได้ชิ้นละไม่เกิน 100KB จึงแบ่งเป็นหลายชิ้น ถ้าชิ้นไหนหายไปจะอ่านชีตใหม่
+const CUST_CACHE_FIELDS = ['mmid', 'cust_no', 'phone', 'customer_name', 'customer_type', 'contact_name',
+  'sales_name', 'store', 'invited', 'tier'];
+
+function customerIndexCached_() {
+  return buildCustomerIndex_(customerRowsCached_());
+}
+
+function customerRowsCached_() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const head = cache.get('cust_n');
+    if (head !== null) {
+      const keys = [];
+      for (let i = 0; i < Number(head); i++) keys.push('cust_' + i);
+      const got = keys.length ? cache.getAll(keys) : {};
+      if (keys.every(function (k) { return got[k] !== undefined && got[k] !== null; })) {
+        const packed = JSON.parse(keys.map(function (k) { return got[k]; }).join('') || '[]');
+        return packed.map(function (a) {
+          const r = {};
+          CUST_CACHE_FIELDS.forEach(function (n, i) { r[n] = a[i]; });
+          return r;
+        });
+      }
+    }
+  } catch (e) {}
+  const rows = readCustomers_().rows;
+  try {
+    const s = JSON.stringify(rows.map(function (r) {
+      return CUST_CACHE_FIELDS.map(function (n) { return r[n] === undefined || r[n] === null ? '' : r[n]; });
+    }));
+    const put = {};
+    let n = 0;
+    for (let i = 0; i < s.length; i += 30000) put['cust_' + (n++)] = s.slice(i, i + 30000);
+    put.cust_n = String(n);
+    CacheService.getScriptCache().putAll(put, 300);
+  } catch (e) {}
+  return rows;
+}
+
+function buildCustomerIndex_(rows) {
+  const c = { rows: rows };
   const idx = { ready: c.rows.length > 0, byMmid: {}, byCustNo: {}, byPhone: {}, byPerson: {}, byCompany: {}, rows: c.rows };
   const addUnique = function (map, key, r) {
     if (!key || key.length < 3) return;
@@ -192,7 +237,14 @@ function apiCustomersImport_(req) {
   });
 }
 
+// เขียนเสร็จแล้วล้าง cache รายชื่อลูกค้า ให้การลงทะเบียนครั้งถัดไปเห็นรายชื่อใหม่
 function writeCustomers_(sh, rows) {
+  writeCustomerRows_(sh, rows);
+  SpreadsheetApp.flush();
+  clearConfigCache_();
+}
+
+function writeCustomerRows_(sh, rows) {
   const n = rows.length;
   const need = n + 1;
   if (sh.getMaxRows() < need) sh.insertRowsAfter(sh.getMaxRows(), need - sh.getMaxRows());
@@ -324,7 +376,7 @@ function apiSettingsUpdate_(req) {
 
 function clearConfigCache_() {
   try {
-    CacheService.getScriptCache().removeAll(['settings', 'reg_count'].concat(TIERS.map(function (t) { return 'cfg_' + t; })));
+    CacheService.getScriptCache().removeAll(['settings', 'reg_count', 'cust_n'].concat(TIERS.map(function (t) { return 'cfg_' + t; })));
   } catch (e) {}
 }
 
