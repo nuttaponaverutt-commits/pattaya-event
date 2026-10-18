@@ -321,7 +321,7 @@
       nameBox.className = 'name win';
       nameBox.textContent = w.full_name;
       $('#subBox').textContent = [w.company, w.phone_tail ? 'โทร xxx-xxx-' + w.phone_tail : ''].filter(Boolean).join('  ·  ');
-      $('#tierBox').innerHTML = '<span class="tier tier-' + esc(w.tier) + '">' + esc(w.tier) + '</span>';
+      // ไม่แสดงป้ายกลุ่ม (VVIP / VIP / Walk-in) บนจอประกาศ
       $('#voidBtn').hidden = false;
       confetti();
     }
@@ -375,7 +375,7 @@
       if (!res.ok) return;
       $('#winners').innerHTML = res.winners.length ? res.winners.map(function (w) {
         return '<div class="w' + (w.status === 'void' ? ' void' : '') + '"><b>' + esc(w.full_name) + '</b>' +
-          '<span class="m">' + esc(w.round) + ' · ' + esc(w.tier) + ' · ' + esc(w.time) + (w.status === 'void' ? ' · สละสิทธิ์' : '') + '</span></div>';
+          '<span class="m">' + esc(w.round) + ' · ' + esc(w.time) + (w.status === 'void' ? ' · สละสิทธิ์' : '') + '</span></div>';
       }).join('') : '<div class="w m">ยังไม่มี</div>';
     }
   </script>
