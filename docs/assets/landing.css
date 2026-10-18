@@ -187,7 +187,7 @@ html[lang="th"] .btn { font-size: 15px; }
 /* ---------- ผลลัพธ์ / การ์ด QR ---------- */
 .result { padding-block: 110px 60px; text-align: center; }
 .result h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 5vw, 44px); margin: 0 0 10px; }
-.result .sub { color: var(--muted); margin: 0 auto 6px; max-width: 46ch; }
+.result .sub { color: var(--ink); margin: 0 auto 6px; max-width: 46ch; text-shadow: 0 1px 12px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9); }
 .qr-card { width: 100%; max-width: 380px; display: block; margin: 22px auto; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(201,162,76,.25); }
 .result .btn { max-width: 380px; margin-top: 8px; }
 .result-actions { display: grid; gap: 10px; justify-items: center; margin-top: 10px; }
@@ -204,8 +204,8 @@ footer .presented { font-family: var(--mono); letter-spacing: .12em; text-transf
 footer .presented b { color: #e31e24; letter-spacing: .02em; text-transform: none; font-family: var(--body); font-size: 16px; }
 
 /* ปุ่มลงทะเบียนลอยบนมือถือ */
-.sticky-cta { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 35; transform: translateY(140%); transition: transform .45s var(--ease); }
-.sticky-cta.show { transform: none; }
+.sticky-cta { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 35; transform: translateY(140%); visibility: hidden; transition: transform .45s var(--ease), visibility 0s .45s; }
+.sticky-cta.show { transform: none; visibility: visible; transition: transform .45s var(--ease); }
 .sticky-cta .btn { width: 100%; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
 @media (min-width: 900px) { .sticky-cta { display: none; } }
 

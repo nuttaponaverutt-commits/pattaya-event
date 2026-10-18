@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/landing.css">
+  <link rel="icon" href="data:,">
   <style>
     .lookup { padding-block: 120px 60px; max-width: 520px; }
     .lookup h1 { font-family: var(--display); font-weight: 500; font-size: clamp(34px, 7vw, 48px); line-height: 1.1; margin: 0 0 10px; }
@@ -36,7 +37,7 @@
         <div id="lookupError" class="alert" hidden></div>
         <div class="field" data-f="phone">
           <label for="phone"><span data-i18n="f.phone">Mobile number</span><span class="req">*</span></label>
-          <input type="tel" id="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
+          <input type="tel" id="phone" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="0812345678">
           <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
         </div>
         <button type="submit" class="btn btn-primary btn-block" id="lookupBtn" data-i18n="my.find">Find my QR</button>
@@ -59,7 +60,12 @@
   <script>
     let cfgRaw = {};
     let current = null; // การ์ดที่แสดงอยู่ (วาดใหม่เมื่อสลับภาษา)
-    const cfgPromise = api('config').then(function (cfg) { if (cfg.ok) cfgRaw = cfg; });
+    // แสดงการ์ดทันทีด้วยข้อมูลงานค่าเริ่มต้น พอระบบตอบแล้วค่อยวาดใหม่
+    api('config').then(function (cfg) {
+      if (!cfg.ok) return;
+      cfgRaw = cfg;
+      if (current) show(current);
+    });
 
     initLangToggle(function () {
       document.title = t('title.myqr') + ' | Wine & Spirits Discovery 2026';
@@ -69,7 +75,6 @@
 
     async function show(reg) {
       current = reg;
-      await cfgPromise;
       document.getElementById('lookupView').hidden = true;
       document.getElementById('resultView').hidden = false;
       await showQrCard(document.getElementById('qrHost'), Object.assign(eventInfoFor(cfgRaw), reg));
@@ -80,7 +85,18 @@
       show(saved);
       // ดึงข้อมูลล่าสุด (รหัส 5 ตัว / กลุ่ม) มาแทนการ์ดที่จำไว้ในเครื่อง
       api('card', { reg_id: saved.reg_id }).then(function (res) {
-        if (!res.ok) return;
+        // ระหว่างรอ ผู้ใช้กด "ไม่ใช่ QR ของฉัน" หรือค้นหาคนอื่นไปแล้ว ไม่ต้องสลับกลับ
+        if (!current || current.reg_id !== saved.reg_id) return;
+        if (!res.ok) {
+          // รายการถูกลบออกจากระบบ (ไม่ใช่เน็ตหลุด/ระบบยุ่ง) ลบการ์ดที่จำไว้ แล้วให้ค้นหาด้วยเบอร์ใหม่
+          if (!res.busy && !res.network && /ไม่พบ/.test(res.error || '')) {
+            try { localStorage.removeItem('pe_reg'); } catch (e) {}
+            current = null;
+            document.getElementById('resultView').hidden = true;
+            document.getElementById('lookupView').hidden = false;
+          }
+          return;
+        }
         if (res.short_code !== saved.short_code || res.tier !== saved.tier || res.full_name !== saved.full_name) {
           saveMyReg(res);
           show(res);

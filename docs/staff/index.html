@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/style.css">
   <link rel="stylesheet" href="../assets/app.css">
+  <link rel="icon" href="data:,">
   <style>
     #scanView { position: fixed; top: 59px; left: 0; right: 0; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)); background: #000; }
     #reader { position: absolute; inset: 0; overflow: hidden; border: 0 !important; }
@@ -407,9 +408,11 @@
     });
 
     async function lookupCode(code) {
-      openSheet('<div class="sheet-head plain">กำลังตรวจสอบ <span class="spinner"></span><small>' + esc(code) + '</small></div><div class="sheet-body"></div>', resumeScanner);
+      const waiting = openSheet('<div class="sheet-head plain">กำลังตรวจสอบ <span class="spinner"></span><small>' + esc(code) + '</small></div><div class="sheet-body"></div>', resumeScanner);
       const res = await authed('scan', { reg_id: code });
       if (!sess) return;
+      // Staff ปิดหน้ารอไปแล้ว (กล้องกลับมาสแกนคนต่อไปแล้ว) ไม่ต้องเด้งผลของคนก่อนขึ้นมาทับ
+      if (!document.body.contains(waiting)) return;
       if (!res.ok) { showError(res.error); return; }
       showResult(res.result, res.person, code);
     }
@@ -462,7 +465,7 @@
       if (ov) ov._onClose = null;
       // เน็ตสะดุดแล้วระบบส่งซ้ำ: ครั้งแรกบันทึกสำเร็จไปแล้วโดยจุดนี้เอง ถือว่าเช็คอินสำเร็จ
       let result = res.result;
-      if (result === 'duplicate' && res._retried && res.person && res.person.checked_in_by === sess.station) result = 'ok';
+      if (result === 'duplicate' && res._retried && res.person && res.person.checked_in_by === deviceName()) result = 'ok';
       showResult(result, res.person || p, p.reg_id);
       if (res.result === 'ok' && navigator.vibrate) navigator.vibrate([60, 60, 60]);
     }

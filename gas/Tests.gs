@@ -31,8 +31,10 @@ function selfTest() {
 
     r = call(Object.assign({ action: 'register' }, form({ phone: '000-000-0001', mmid: 'other' })));
     check('register เบอร์ซ้ำ คืน QR เดิม', r.ok && r.existing && r.reg_id === id1, r);
+    // หมายเลขสมาชิกเดียวกัน (คนละเบอร์) = คนละคนในร้านเดียวกัน ลงทะเบียนแยกได้
     r = call(Object.assign({ action: 'register' }, form({ phone: '0000000009', mmid: 'test.0001' })));
-    check('register MMID ซ้ำ (ต่างแค่จุด/ขีด) คืน QR เดิม', r.ok && r.existing && r.reg_id === id1, r);
+    if (r.ok && !r.existing) createdIds.push(r.reg_id);
+    check('register MMID ซ้ำแต่เบอร์ต่าง ได้ QR ใหม่', r.ok && !r.existing && r.reg_id !== id1, r);
 
     r = call(Object.assign({ action: 'register', src: 'walkin' }, form({ phone: '0000000002', mmid: 'TEST-0002' })));
     if (r.ok && !r.existing) createdIds.push(r.reg_id);
@@ -153,6 +155,10 @@ function selfTest() {
     if (r.ok && !r.existing) createdIds.push(r.reg_id);
     rec = r.ok && readRegs_().byId[r.reg_id];
     check('จับคู่จากชื่อ-นามสกุล (ตัดคำนำหน้า/ช่องว่าง)', rec && rec.match_method === 'name' && rec.sales_name === 'Sales ทดสอบ B', rec || r);
+    r = call(Object.assign({ action: 'register' }, form({ full_name: 'คนพิมพ์ชื่อร้าน', phone: '0000000008', mmid: '', company: 'บริษัท ทดสอบระบบ จำกัด' })));
+    if (r.ok && !r.existing) createdIds.push(r.reg_id);
+    rec = r.ok && readRegs_().byId[r.reg_id];
+    check('จับคู่จากชื่อร้านได้ Sales แต่ไม่ได้กลุ่ม VVIP', rec && rec.match_method === 'company' && rec.tier === 'Walk-in', rec || r);
     r = call({ action: 'customers', token: adminTok });
     const tc = r.ok && r.customers.find(function (x) { return x.cust_no === '99900111'; });
     check('รายชื่อลูกค้าแสดงสถานะลงทะเบียนแล้ว', tc && tc.status === 'ลงทะเบียนแล้ว' && tc.invited === true, tc || r);

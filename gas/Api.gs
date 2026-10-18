@@ -53,20 +53,26 @@ function doPost(e) {
     if (!err.userMessage) console.error(err && err.stack || err);
     res = { ok: false, error: err.userMessage || 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่' };
     if (err.busy) res.busy = true; // หน้าเว็บจะส่งใหม่เอง
+    // Google ตอบช้าหรือรับงานไม่ไหว (Sheet หมดเวลา, เรียกถี่เกิน) ให้หน้าเว็บส่งใหม่เองเหมือนตอนระบบยุ่ง
+    else if (!err.userMessage && /timed out|too many|invoked too many|try again|service error|service unavailable|exceeded|lock/i.test(String(err && err.message))) {
+      res.error = 'ระบบกำลังยุ่ง กรุณาลองใหม่อีกครั้ง';
+      res.busy = true;
+    }
   }
   return json_(res);
 }
 
 function handle_(req) {
-  const action = req && req.action;
-  if (PUBLIC_ACTIONS[action]) return PUBLIC_ACTIONS[action](req);
+  const action = String(req && req.action || '');
+  const has = function (map) { return Object.prototype.hasOwnProperty.call(map, action); };
+  if (has(PUBLIC_ACTIONS)) return PUBLIC_ACTIONS[action](req);
 
   let sess = verifyToken_(req.token);
   if (!sess) return { ok: false, auth: false, error: 'กรุณาเข้าสู่ระบบใหม่' };
   // เครื่อง Staff เปลี่ยนชื่อตัวเองได้หลังล็อกอิน ใช้ชื่อล่าสุดที่ส่งมาแทนชื่อตอนล็อกอิน
   if (sess.role === 'staff' && req.station_name) sess = Object.assign({}, sess, { station: clip_(req.station_name, 40) });
-  if (STAFF_ACTIONS[action]) return STAFF_ACTIONS[action](req, sess);
-  if (ADMIN_ACTIONS[action]) {
+  if (has(STAFF_ACTIONS)) return STAFF_ACTIONS[action](req, sess);
+  if (has(ADMIN_ACTIONS)) {
     if (sess.role !== 'admin') return { ok: false, auth: false, error: 'ไม่มีสิทธิ์ใช้งานส่วนนี้' };
     return ADMIN_ACTIONS[action](req, sess);
   }
@@ -86,7 +92,7 @@ function apiConfig_(req) {
   const out = {
     ok: true,
     event_name: String(s.event_name || ''),
-    event_date: s.event_date instanceof Date ? fmt_(s.event_date, 'yyyy-MM-dd') : String(s.event_date || ''),
+    event_date: dateStr_(s.event_date),
     event_time: String(s.event_time || ''),
     event_venue: String(s.event_venue || ''),
     tier: tier,
@@ -137,7 +143,12 @@ function apiLogin_(req) {
   const role = req.role === 'admin' ? 'admin' : 'staff';
   const props = PropertiesService.getScriptProperties();
   const pass = props.getProperty(role === 'admin' ? 'ADMIN_PASS' : 'STAFF_PASS');
+  // ใส่รหัสผิดเกิน 15 ครั้งใน 10 นาที (นับรวมทุกเครื่อง) ล็อกการเข้าสู่ระบบของบทบาทนั้นไว้ก่อน กันการสุ่มเดารหัส
+  const failKey = 'login_fail_' + role;
+  const fails = Number(cacheGet_(failKey) || 0);
+  if (fails >= 15) return { ok: false, error: 'ใส่รหัสผิดหลายครั้งเกินไป กรุณารอ 10 นาทีแล้วลองใหม่' };
   if (!pass || String(req.password || '') !== pass) {
+    cachePut_(failKey, String(fails + 1), 600);
     Utilities.sleep(1000); // ชะลอการเดารหัส
     return { ok: false, error: 'รหัสผ่านไม่ถูกต้อง' };
   }
@@ -208,7 +219,16 @@ function apiStaffRegister_(req, sess) {
 
 // ---------- Admin ----------
 
+// หน้าภาพรวมรีเฟรชทุก 15 วินาทีต่อแท็บ เก็บผลไว้ 10 วินาที ไม่ให้แย่งเวลาระบบกับคนที่กำลังลงทะเบียน
 function apiDashboard_() {
+  const hit = cacheGet_('dash');
+  if (hit) return JSON.parse(hit);
+  const out = buildDashboard_();
+  try { const s = JSON.stringify(out); if (s.length < 90000) cachePut_('dash', s, 10); } catch (e) {}
+  return out;
+}
+
+function buildDashboard_() {
   const t = readRegs_();
   const recs = t.records;
   const s = getSettings_();
@@ -301,9 +321,9 @@ function apiUpdate_(req, sess) {
       }
     }
 
-    if (upd.phone || upd.mmid) {
-      const dup = findDuplicate_(t, upd.phone || rec.phone, 'mmid' in upd ? upd.mmid : rec.mmid, id);
-      if (dup) fail_('เบอร์โทรหรือ MMID ซ้ำกับ ' + dup.full_name + ' (' + dup.reg_id + ')');
+    if (upd.phone) {
+      const dup = findDuplicate_(t, upd.phone, id);
+      if (dup) fail_('เบอร์โทรซ้ำกับ ' + dup.full_name + ' (' + dup.reg_id + ')');
     }
 
     writeFields_(t, rec, upd);
@@ -452,7 +472,7 @@ function higherTier_(a, b) {
 function createRegistration_(f, source, tier, pre) {
   pre = pre || prepareRegistration_(f);
   const t = readRegs_();
-  const dup = findDuplicate_(t, f.phone, f.mmid, null);
+  const dup = findDuplicate_(t, f.phone, null);
   if (dup) {
     // ลงซ้ำด้วยลิงก์กลุ่มที่สูงกว่า ให้ยกระดับกลุ่ม ไม่ลดระดับ
     const cur = TIERS.indexOf(dup.tier) === -1 ? TIERS.length - 1 : TIERS.indexOf(dup.tier);
@@ -535,12 +555,12 @@ function onlineState_(s, count) {
   return { open: true, kind: '', reason: '' };
 }
 
-function findDuplicate_(t, phone, mmid, exceptId) {
+// ลงซ้ำดูจากเบอร์โทรเท่านั้น (หมายเลขสมาชิก Makro ใช้ร่วมกันได้ทั้งร้าน หลายคนในร้านเดียวกันลงทะเบียนแยกกันได้)
+function findDuplicate_(t, phone, exceptId) {
   const pk = phoneKey_(phone);
-  const mk = mmidKey_(mmid);
+  if (!pk) return null;
   return t.records.find(function (r) {
-    if (r.reg_id === exceptId) return false;
-    return (pk && phoneKey_(r.phone) === pk) || (mk && mmidKey_(r.mmid) === mk);
+    return r.reg_id !== exceptId && phoneKey_(r.phone) === pk;
   }) || null;
 }
 
@@ -637,7 +657,7 @@ function appendRecord_(t, rec) {
   const row = t.sh.getLastRow() + 1;
   const range = t.sh.getRange(row, 1, 1, t.h.length);
   // setup() ตั้งคอลัมน์เหล่านี้เป็น text ไว้ล่วงหน้าแล้ว ถ้าแถวเกินที่ตั้งไว้ค่อยตั้งทีละช่อง
-  if (row > Number(PropertiesService.getScriptProperties().getProperty('REG_TEXT_ROWS') || 0)) {
+  if (row > regTextRows_()) {
     t.sh.getRange(row, t.col.phone + 1).setNumberFormat('@');
     t.sh.getRange(row, t.col.mmid + 1).setNumberFormat('@');
     // รหัสอย่าง 2E345 จะถูกแปลงเป็นตัวเลขถ้าไม่ตั้งเป็น text
@@ -652,11 +672,26 @@ function appendRecord_(t, rec) {
   cachePut_('reg_count', String(t.records.length), 60);
 }
 
+// จำนวนแถวที่ setup() ตั้งเป็น text ไว้แล้ว (เก็บใน cache ลดการอ่าน Script Properties ระหว่างถือล็อก)
+function regTextRows_() {
+  const hit = cacheGet_('reg_text_rows');
+  if (hit !== null && hit !== undefined) return Number(hit);
+  const n = Number(PropertiesService.getScriptProperties().getProperty('REG_TEXT_ROWS') || 0);
+  cachePut_('reg_text_rows', String(n), 3600);
+  return n;
+}
+
+// แก้หลายช่องของแถวเดียวในการเขียนครั้งเดียว (ช่องที่อยู่ระหว่างกลางแต่ไม่ได้แก้ ใช้ค่าเดิมจาก rec ที่อ่านภายใต้ล็อกเดียวกัน)
 function writeFields_(t, rec, upd) {
-  Object.keys(upd).forEach(function (k) {
-    if (t.col[k] === undefined) return;
-    t.sh.getRange(rec._row, t.col[k] + 1).setValue(safe_(upd[k]));
-  });
+  const cols = Object.keys(upd).filter(function (k) { return t.col[k] !== undefined; }).map(function (k) { return t.col[k]; });
+  if (!cols.length) return;
+  const lo = Math.min.apply(null, cols), hi = Math.max.apply(null, cols);
+  const row = [];
+  for (let c = lo; c <= hi; c++) {
+    const name = t.h[c];
+    row.push(safe_(Object.prototype.hasOwnProperty.call(upd, name) ? upd[name] : rec[name]));
+  }
+  t.sh.getRange(rec._row, lo + 1, 1, row.length).setValues([row]);
 }
 
 function logCheckin_(regId, name, result, sess, device) {
@@ -677,7 +712,20 @@ function getSettingsCached_() {
   const hit = cacheGet_('settings');
   if (hit) return JSON.parse(hit);
   const s = getSettings_();
+  // วันที่ใน Sheet เป็น Date ซึ่ง JSON จะแปลงเป็นเวลา UTC แบบ 2026-11-05T17:00:00.000Z จึงแปลงเป็น yyyy-MM-dd ก่อน
+  Object.keys(s).forEach(function (k) { if (s[k] instanceof Date) s[k] = fmt_(s[k], 'yyyy-MM-dd'); });
   cachePut_('settings', JSON.stringify(s), 30);
+  return s;
+}
+
+// วันที่จาก Settings เป็นข้อความ yyyy-MM-dd เสมอ (รับได้ทั้ง Date และข้อความ)
+function dateStr_(v) {
+  if (v instanceof Date) return fmt_(v, 'yyyy-MM-dd');
+  const s = String(v || '');
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d)) return fmt_(d, 'yyyy-MM-dd');
+  }
   return s;
 }
 
@@ -701,6 +749,8 @@ function withLock_(fn) {
   try {
     return fn();
   } finally {
+    // เขียนลง Sheet ให้เสร็จจริงก่อนปล่อยล็อก ไม่งั้นคนถัดไปอาจอ่านข้อมูลเก่า แล้วเขียนทับแถวเดียวกัน
+    try { SpreadsheetApp.flush(); } catch (e) {}
     lock.releaseLock();
   }
 }

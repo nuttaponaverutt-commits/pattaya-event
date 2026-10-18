@@ -52,6 +52,12 @@ const OLD_VENUES = ['Pattaya', 'Vela Grand Ballroom, Cape Dara Resort Pattaya'];
 
 // รันจาก Apps Script editor (รันซ้ำได้ ไม่ทับข้อมูลเดิม ใช้อัปเกรดโครง Sheet ด้วย)
 function setup() {
+  withLock_(setup_); // กันชนกับคนที่กำลังลงทะเบียนหรือเช็คอิน (setup เขียนคอลัมน์กลุ่มและรหัสสำรอง)
+  try { CacheService.getScriptCache().remove('reg_text_rows'); } catch (e) {}
+  Logger.log('setup เสร็จแล้ว');
+}
+
+function setup_() {
   const ss = SpreadsheetApp.getActive();
 
   Object.keys(SHEETS).forEach(function (name) {
@@ -131,7 +137,6 @@ function setup() {
   if (!props.getProperty('STAFF_PASS')) props.setProperty('STAFF_PASS', DEFAULT_STAFF_PASS);
   if (!props.getProperty('ADMIN_PASS')) props.setProperty('ADMIN_PASS', DEFAULT_ADMIN_PASS);
 
-  Logger.log('setup เสร็จแล้ว');
 }
 
 function randomCode_() {

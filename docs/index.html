@@ -18,13 +18,14 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400;1,6..96,500&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="assets/hero.jpg">
   <link rel="stylesheet" href="assets/landing.css">
+  <link rel="icon" href="data:,">
 </head>
 <body>
   <!-- ถามอายุก่อนเข้าเว็บ (จำไว้ 30 วัน) -->
-  <div class="age-gate" id="ageGate" hidden>
+  <div class="age-gate" id="ageGate" role="dialog" aria-modal="true" aria-labelledby="ageTitle" hidden>
     <div class="age-box">
       <p class="kicker">Wine &amp; Spirits Discovery 2026</p>
-      <h2 data-i18n="age.title">Are you 20 years of age or older?</h2>
+      <h2 id="ageTitle" data-i18n="age.title">Are you 20 years of age or older?</h2>
       <p data-i18n="age.sub">This website contains information about alcoholic beverages.</p>
       <div class="age-actions">
         <button type="button" class="btn btn-primary" id="ageYes" data-i18n="age.yes">Yes, I am 20+</button>
@@ -107,7 +108,7 @@
             </div>
             <div class="field" data-f="phone">
               <label for="phone"><span data-i18n="f.phone">Mobile number</span><span class="req">*</span></label>
-              <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="0812345678">
+              <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="0812345678">
               <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
             </div>
             <div class="field" data-f="mmid">
@@ -165,6 +166,7 @@
           </div>
         </div>
       </div>
+      </div>
     </section>
   </main>
 
@@ -213,10 +215,15 @@
       const g = document.getElementById('ageGate');
       g.hidden = false;
       document.body.style.overflow = 'hidden';
+      // ระหว่างถามอายุ ไม่ให้กด Tab ไปโดนส่วนอื่นของหน้า
+      const behind = [document.getElementById('nav'), document.getElementById('landing'), document.querySelector('footer'), document.getElementById('stickyCta')];
+      behind.forEach(function (el) { if (el) el.inert = true; });
+      setTimeout(function () { document.getElementById('ageYes').focus(); }, 50);
       document.getElementById('ageYes').addEventListener('click', function () {
         try { localStorage.setItem('pe_age_ok', String(Date.now() + 30 * 864e5)); } catch (e) {}
         g.hidden = true;
         document.body.style.overflow = '';
+        behind.forEach(function (el) { if (el) el.inert = false; });
       });
       document.getElementById('ageNo').addEventListener('click', function () {
         document.getElementById('ageDenied').hidden = false;
@@ -306,15 +313,16 @@
     });
 
     // ---------- ข้อมูลงาน ----------
+    // แสดงฟอร์มทันทีโดยไม่ต้องรอระบบตอบ (ข้อมูลงานมีค่าเริ่มต้นอยู่แล้ว) ถ้าระบบบอกว่าปิดรับหรือเต็ม ค่อยซ่อนฟอร์ม
+    // ถ้าโหลดข้อมูลไม่ได้ก็ยังกรอกได้ ระบบจะตรวจอีกครั้งตอนกดส่ง
     (async function init() {
-      const cfg = await api('config', { inv: inviteCode });
       document.getElementById('loadingBox').hidden = true;
-      if (!cfg.ok) { showClosed(tErr(cfg.error) || t('err.load')); return; }
-      cfgRaw = cfg;
-      render();
-      if (!cfg.registration_open) return;
       document.getElementById('regForm').hidden = false;
       if (isWalkin) registerSec.scrollIntoView();
+      const cfg = await api('config', { inv: inviteCode });
+      if (!cfg.ok) return;
+      cfgRaw = cfg;
+      render();
     })();
 
     // วาดข้อความที่ขึ้นกับภาษาและข้อมูลจากระบบ (เรียกซ้ำเมื่อสลับ EN / TH)
@@ -330,7 +338,7 @@
         document.getElementById('inviteTier').textContent = ev.tier;
         document.getElementById('inviteBadge').hidden = false;
       }
-      if (!cfgRaw.registration_open) showClosedPanel(cfgRaw);
+      if (!cfgRaw.registration_open && !lastResult) showClosedPanel(cfgRaw);
       if (lastResult) showResult(lastResult);
     }
 
@@ -421,6 +429,11 @@
       document.getElementById('landing').hidden = true;
       document.getElementById('resultView').hidden = false;
       sticky.classList.remove('show');
+      // หน้าการ์ด QR ไม่มีฟอร์มแล้ว ปุ่ม Register บนเมนูเปลี่ยนเป็นกลับหน้าแรก
+      const navReg = document.querySelector('.nav-reg');
+      navReg.href = './';
+      navReg.setAttribute('data-i18n', 'res.home');
+      navReg.textContent = t('res.home');
       window.scrollTo(0, 0);
       await showResult(res);
     });

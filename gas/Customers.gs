@@ -144,7 +144,7 @@ function matchCustomer_(idx, f) {
   if (!r && mk) {
     const digits = mk.replace(/\D/g, '');
     // ลูกค้ากรอกเลขลูกค้าแทน MMID หรือ MMID ใบอื่นที่มีเลขลูกค้าเดียวกัน (MMID = 0 + เลขลูกค้า + 5 หลัก)
-    if (idx.byCustNo[digits]) { r = idx.byCustNo[digits]; m = 'custno'; }
+    if (digits.length >= 6 && idx.byCustNo[digits]) { r = idx.byCustNo[digits]; m = 'custno'; }
     else if (digits.length >= 12) {
       const inner = digits.slice(0, digits.length - 5).replace(/^0+/, '');
       if (idx.byCustNo[inner]) { r = idx.byCustNo[inner]; m = 'custno'; }
@@ -160,7 +160,9 @@ function matchCustomer_(idx, f) {
     cust_no: r.cust_no,
     customer_name: String(r.customer_name || ''),
     store: String(r.store || ''),
-    cust_tier: isTrue_(r.invited) && TIERS.indexOf(r.tier) !== -1 ? r.tier : ''
+    // ได้กลุ่มตามรายชื่อเฉพาะเมื่อจับคู่จากหมายเลขสมาชิก เลขลูกค้า หรือเบอร์โทร
+    // จับจากชื่อหรือชื่อร้านอาจเป็นคนอื่น (ใครก็พิมพ์ชื่อร้านดังได้) จึงไม่ให้กลุ่ม ให้ Admin ตรวจเอง
+    cust_tier: WEAK_MATCH.indexOf(m) === -1 && isTrue_(r.invited) && TIERS.indexOf(r.tier) !== -1 ? r.tier : ''
   };
 }
 
@@ -168,6 +170,10 @@ function matchCustomer_(idx, f) {
 // สำรองไว้ในแท็บซ่อน Customers_backup_วันที่ ก่อนล้าง และให้ผู้ลงทะเบียนที่จับคู่จากรายชื่อนี้กลับเป็น "ไม่มี Sales"
 // (รายการที่ Admin เลือก Sales เองไม่ถูกเปลี่ยน)
 function clearCustomerList() {
+  withLock_(clearCustomerList_); // กันชนกับคนที่กำลังลงทะเบียนหรือเช็คอิน
+}
+
+function clearCustomerList_() {
   const ss = SpreadsheetApp.getActive();
   const sh = ss.getSheetByName('Customers');
   const n = sh ? sh.getLastRow() - 1 : 0;

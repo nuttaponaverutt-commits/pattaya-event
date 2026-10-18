@@ -171,21 +171,22 @@ function initLangToggle(onChange) {
 
 // วันที่งานตามภาษา: Friday 6 November 2026 / 6 พฤศจิกายน 2569
 function eventDateText(iso) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
-  if (!m) return iso || '';
-  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  const d = parseEventDate(iso); // common.js
+  if (!d) return iso || '';
   return LANG === 'en'
     ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : d.toLocaleDateString('th-TH', { dateStyle: 'long' });
 }
 
 // ข้อมูลงานตามภาษา (เวลา/สถานที่ภาษาอังกฤษตั้งได้ใน Settings: event_time_en / event_venue_en)
+// ถ้ายังโหลดข้อมูลจากระบบไม่เสร็จ (หรือโหลดไม่ได้) ใช้ค่าเริ่มต้นของงานนี้ หน้าเว็บและการ์ด QR จะได้ไม่ว่าง
 function eventInfoFor(cfg) {
   const en = LANG === 'en';
   return Object.assign({}, cfg, {
     lang: LANG,
-    event_date_text: eventDateText(cfg.event_date),
-    event_time: en ? (cfg.event_time_en || '5.00 – 9.00 PM') : cfg.event_time,
-    event_venue: en ? (cfg.event_venue_en || 'Vela Grand Ballroom, 2nd Floor, Cape Dara Resort Pattaya') : cfg.event_venue
+    event_date: cfg.event_date || '2026-11-06',
+    event_date_text: eventDateText(cfg.event_date || '2026-11-06'),
+    event_time: en ? (cfg.event_time_en || '5.00 – 9.00 PM') : (cfg.event_time || '17:00 – 21:00 น.'),
+    event_venue: en ? (cfg.event_venue_en || 'Vela Grand Ballroom, 2nd Floor, Cape Dara Resort Pattaya') : (cfg.event_venue || 'Vela Grand Ballroom ชั้น 2, Cape Dara Resort Pattaya')
   });
 }

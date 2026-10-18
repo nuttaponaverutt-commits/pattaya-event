@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/style.css">
   <link rel="stylesheet" href="../assets/app.css">
+  <link rel="icon" href="data:,">
   <style>
     .layout { display: flex; min-height: calc(100vh - 59px); }
     .sidenav { display: none; }
@@ -405,7 +406,7 @@
 
       if (d.by_tier) {
         $('#tierCards').innerHTML = ['VVIP', 'VIP', 'Walk-in'].map(function (t) {
-          const x = d.by_tier[t];
+          const x = (d.by_tier && d.by_tier[t]) || { registered: 0, attended: 0, target: 0 };
           const pct = x.target ? Math.min(100, x.registered / x.target * 100) : 0;
           return '<div class="tier-card"><div class="row">' + tierPill(t) + '<span class="muted">เป้า ' + (x.target || '-') + '</span></div>' +
             '<div class="row"><span class="big">' + x.registered + ' <small>ลงทะเบียน</small></span><span class="big">' + x.attended + ' <small>มาแล้ว</small></span></div>' +
@@ -602,7 +603,7 @@
       const st = $('#fStatus').value, src = $('#fSource').value, sales = $('#fSales').value, tier = $('#fTier').value;
       return records.filter(function (r) {
         if (st && r.status !== st) return false;
-        if (tier && r.tier !== tier) return false;
+        if (tier && (r.tier || 'Walk-in') !== tier) return false;
         if (src && r.source !== src) return false;
         if (sales === '__none' && r.sales_name) return false;
         if (sales === '__weak' && WEAK.indexOf(r.match_method) === -1) return false;
@@ -692,7 +693,7 @@
         '<form class="sheet-body" id="editForm">' +
           '<div id="editError" class="alert" hidden></div>' +
           '<div class="field"><label>ชื่อ-นามสกุล</label><input type="text" name="full_name" maxlength="100" value="' + esc(r.full_name) + '"></div>' +
-          '<div class="field"><label>เบอร์โทร</label><input type="tel" name="phone" maxlength="12" value="' + esc(r.phone) + '"></div>' +
+          '<div class="field"><label>เบอร์โทร</label><input type="tel" name="phone" maxlength="16" value="' + esc(r.phone) + '"></div>' +
           '<div class="field"><label>MMID</label><input type="text" name="mmid" maxlength="30" value="' + esc(r.mmid) + '"></div>' +
           '<div class="field"><label>ร้าน/บริษัท</label><input type="text" name="company" maxlength="100" value="' + esc(r.company) + '"></div>' +
           '<div class="field"><label>Sales <span class="opt">(เลือกเองจะไม่ถูกทับตอน Match ใหม่)</span></label><select name="sales_name">' + opts + '</select></div>' +
@@ -710,7 +711,9 @@
         const fields = {};
         ['full_name', 'phone', 'mmid', 'company', 'note', 'tier', 'status', 'sales_name'].forEach(function (k) {
           const v = f[k].value.trim();
-          if (v !== String(r[k] == null ? '' : r[k])) fields[k] = k === 'phone' ? cleanPhone(v) : v;
+          // รายการเก่าที่ยังไม่มีกลุ่ม แสดงเป็น Walk-in อยู่แล้ว ไม่นับว่าแก้
+          const cur = k === 'tier' ? (r.tier || 'Walk-in') : String(r[k] == null ? '' : r[k]);
+          if (v !== cur) fields[k] = k === 'phone' ? cleanPhone(v) : v;
         });
         if (!Object.keys(fields).length) { closeSheet(); return; }
         const btn = $('#saveBtn', ov);
@@ -767,10 +770,12 @@
         ['checked_in_by', 'checked_in_by'], ['note', 'note']
       ];
       const cell = function (v, asText) {
-        const s = String(v == null ? '' : v);
-        // ="..." ให้ Excel เก็บเลข 0 นำหน้าไว้
-        if (asText && s) return '="' + s.replace(/"/g, '""') + '"';
-        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        let s = String(v == null ? '' : v);
+        // ="..." ให้ Excel เก็บเลข 0 นำหน้าไว้ (ใช้เฉพาะค่าที่เป็นตัวเลข/ตัวอักษรล้วน ไม่งั้นคอลัมน์จะเลื่อน)
+        if (asText && s && /^[0-9A-Za-z\-\s.]+$/.test(s)) return '="' + s + '"';
+        // ข้อความที่ลูกค้าพิมพ์ขึ้นต้นด้วย = + - @ จะถูก Excel มองเป็นสูตร ใส่ ' นำหน้าไว้
+        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+        return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
       };
       const lines = [cols.map(function (c) { return c[1]; }).join(',')].concat(rows.map(function (r) {
         return cols.map(function (c) { return cell(r[c[0]], c[0] === 'phone' || c[0] === 'mmid' || c[0] === 'short_code'); }).join(',');

@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
   <style>
     :root {
       --bg: #0b0b0a; --panel: #171612; --line: #2e2b24; --gold: #c9a24c; --gold-soft: #e9d6a6; --cream: #f4ecd8; --muted: #9a927f; --bad: #e07a7a;
@@ -29,12 +30,44 @@
     .brand .round { font-family: var(--display); font-size: clamp(32px, 5vw, 56px); margin-top: 4px; letter-spacing: .02em; }
     .brand .pool { color: var(--muted); font-size: 15px; margin-top: 4px; }
 
-    .center { display: grid; place-content: center; text-align: center; gap: 18px; padding: 24px 0; }
+    .center { display: grid; place-content: center; justify-items: center; text-align: center; gap: 18px; padding: 24px 0; position: relative; z-index: 2; }
     .name { font-size: clamp(40px, 7vw, 96px); font-weight: 600; line-height: 1.15; min-height: 1.2em; color: var(--cream); text-wrap: balance; }
-    .name.spin { color: var(--muted); }
-    .name.win { color: var(--gold-soft); text-shadow: 0 0 40px rgba(201,162,76,.45); animation: pop .5s ease-out; }
-    @keyframes pop { from { transform: scale(.92); opacity: .4; } to { transform: scale(1); opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) { .name.win { animation: none; } }
+    .name.win {
+      background: linear-gradient(100deg, var(--gold-soft) 20%, #fff8e1 42%, var(--gold-soft) 64%);
+      background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 0 34px rgba(201,162,76,.5));
+      animation: pop .8s cubic-bezier(.2, 1.5, .4, 1), shine 2.8s linear .8s infinite;
+    }
+    @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes shine { from { background-position: 100% 0; } to { background-position: -160% 0; } }
+    .kicker { font-family: var(--display); font-style: italic; color: var(--gold); font-size: clamp(20px, 2.6vw, 32px); min-height: 1.3em; opacity: 0; transform: translateY(8px); transition: opacity .5s, transform .5s; }
+    .kicker.show { opacity: 1; transform: none; }
+
+    /* วงล้อรายชื่อแบบสล็อต: เห็น 3 แถว แถวกลางคือผู้โชคดี */
+    .reel-win {
+      --rh: 1.5em; position: relative; overflow: hidden; height: calc(var(--rh) * 3); width: min(92vw, 980px);
+      font-size: clamp(30px, 5vw, 70px); font-weight: 600;
+      -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+      mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+    }
+    .reel-frame { position: absolute; left: 50%; transform: translateX(-50%); width: min(92vw, 980px); height: calc(clamp(30px, 5vw, 70px) * 1.5); top: 50%; margin-top: calc(clamp(30px, 5vw, 70px) * -.75);
+      border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(201,162,76,.10), transparent); }
+    .reel-box { position: relative; display: grid; place-items: center; }
+    .reel-box.spinning .reel-frame { animation: glow 1s ease-in-out infinite alternate; }
+    @keyframes glow { from { box-shadow: 0 0 0 rgba(201,162,76,0); } to { box-shadow: 0 0 46px rgba(201,162,76,.35), inset 0 0 30px rgba(201,162,76,.15); } }
+    .reel { will-change: transform; }
+    .reel .cell { height: var(--rh); line-height: var(--rh); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 12px; color: var(--cream); }
+    .reel.blur .cell { filter: blur(2px); opacity: .85; }
+    .reel .cell { transition: filter .6s, opacity .6s; }
+    .reel-box.landed .reel-frame { animation: none; box-shadow: 0 0 60px rgba(201,162,76,.55); }
+
+    #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+    .stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(255,240,200,.55), rgba(201,162,76,.15) 35%, transparent 65%); }
+    .stage.flash::after { animation: flash 1.1s ease-out; }
+    @keyframes flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .name.win { animation: none; } .reel-box.spinning .reel-frame { animation: none; } .stage.flash::after { animation: none; } }
     .sub { font-size: clamp(18px, 2.4vw, 28px); color: var(--gold-soft); min-height: 1.4em; }
     .tier { display: inline-block; padding: 6px 22px; border-radius: 999px; font-weight: 600; letter-spacing: .1em; font-size: 20px; }
     .tier-VVIP { background: var(--gold); color: #151412; }
@@ -79,10 +112,16 @@
       </div>
 
       <div class="center" aria-live="polite">
+        <div class="kicker" id="kicker">ขอแสดงความยินดีกับผู้โชคดี</div>
+        <div class="reel-box" id="reelBox" hidden>
+          <div class="reel-win"><div class="reel" id="reel"></div></div>
+          <div class="reel-frame"></div>
+        </div>
         <div class="name idle" id="nameBox">พร้อมสุ่มรางวัล</div>
         <div class="sub" id="subBox"></div>
         <div id="tierBox"></div>
       </div>
+      <canvas id="fx" aria-hidden="true"></canvas>
 
       <div>
         <div class="err" id="errBox"></div>
@@ -139,11 +178,19 @@
     $('#goBtn').addEventListener('click', function () { draw(); });
     $('#voidBtn').addEventListener('click', async function () {
       if (!lastWinner || busy) return;
+      busy = true; // กันกดซ้ำระหว่างรอ
+      this.disabled = true;
       const res = await authed('draw_void', { reg_id: lastWinner.reg_id });
+      this.disabled = false;
+      busy = false;
       if (!res.ok) { $('#errBox').textContent = res.error; return; }
       loadWinners();
       draw();
     });
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let recentNames = []; // รายชื่อจากรอบก่อน ใช้หมุนระหว่างรอระบบสุ่ม
+    let spinRaf = 0;
 
     async function draw() {
       if (busy) return;
@@ -152,29 +199,28 @@
       $('#goBtn').disabled = true;
       $('#voidBtn').hidden = true;
       $('#stage').classList.add('presenting');
-      const nameBox = $('#nameBox');
-      nameBox.className = 'name spin';
-      nameBox.textContent = 'กำลังสุ่ม...';
+      $('#kicker').classList.remove('show');
+      $('#nameBox').hidden = true;
       $('#subBox').textContent = '';
       $('#tierBox').innerHTML = '';
+      startSpin(); // หมุนทันทีที่กด ไม่ต้องรอระบบตอบ
 
       const res = await authed('draw', { tier: $('#tier').value, round: $('#round').value });
       if (!res.ok) {
-        nameBox.className = 'name idle';
-        nameBox.textContent = 'พร้อมสุ่มรางวัล';
-        $('#errBox').textContent = res.error;
+        stopSpin();
+        showIdle();
+        // เน็ตหลุดตอนรอ: ระบบอาจสุ่มไปแล้ว ดึงรายชื่อผู้โชคดีมาแสดงก่อน กันสุ่มซ้ำโดยไม่รู้ตัว
+        $('#errBox').textContent = res.network ? 'เชื่อมต่อไม่ได้ กรุณาดูรายชื่อผู้โชคดีด้านขวาก่อนกดสุ่มใหม่' : res.error;
+        loadWinners();
         finish();
         return;
       }
       $('#poolText').textContent = 'ผู้มีสิทธิ์ลุ้น ' + res.pool_size + ' คน';
-      await spin(res.names);
+      if (res.names && res.names.length) recentNames = res.names.slice();
       const w = res.winner;
       lastWinner = w;
-      nameBox.className = 'name win';
-      nameBox.textContent = w.full_name;
-      $('#subBox').textContent = [w.company, w.phone_tail ? 'โทร xxx-xxx-' + w.phone_tail : ''].filter(Boolean).join('  ·  ');
-      $('#tierBox').innerHTML = '<span class="tier tier-' + esc(w.tier) + '">' + esc(w.tier) + '</span>';
-      $('#voidBtn').hidden = false;
+      await landOn(res.names, w.full_name);
+      reveal(w);
       loadWinners();
       finish();
     }
@@ -185,20 +231,143 @@
       $('#stage').classList.remove('presenting');
     }
 
-    // หมุนรายชื่อ ช้าลงเรื่อยๆ ประมาณ 3 วินาที
-    function spin(names) {
+    function showIdle() {
+      $('#reelBox').hidden = true;
+      const nameBox = $('#nameBox');
+      nameBox.hidden = false;
+      nameBox.className = 'name idle';
+      nameBox.textContent = 'พร้อมสุ่มรางวัล';
+    }
+
+    function fillReel(list) {
+      $('#reel').innerHTML = list.map(function (n) { return '<div class="cell">' + esc(n) + '</div>'; }).join('');
+    }
+    function rowHeight() {
+      const c = $('#reel').firstElementChild;
+      return c ? c.getBoundingClientRect().height : 80;
+    }
+
+    // ช่วงรอระบบ: รายชื่อวิ่งเร็ววนไปเรื่อยๆ
+    function startSpin() {
+      if (reduce) return;
+      const base = recentNames.length ? recentNames : ['✦', 'Wine & Spirits', '✦', 'Discovery 2026', '✦', 'Lucky Draw'];
+      const list = [];
+      for (let i = 0; i < 24; i++) list.push(base[i % base.length]);
+      $('#reelBox').hidden = false;
+      $('#reelBox').className = 'reel-box spinning';
+      fillReel(list.concat(list));
+      const reel = $('#reel');
+      reel.style.transition = 'none';
+      reel.classList.add('blur');
+      const loop = list.length * rowHeight();
+      let y = 0, last = performance.now();
+      cancelAnimationFrame(spinRaf);
+      (function frame(t) {
+        y = (y + (t - last) * 2.4) % loop;
+        last = t;
+        reel.style.transform = 'translate3d(0,' + (-y) + 'px,0)';
+        spinRaf = requestAnimationFrame(frame);
+      })(last);
+    }
+    function stopSpin() { cancelAnimationFrame(spinRaf); }
+
+    // ได้ผลแล้ว: วงล้อค่อยๆ ช้าลงจนผู้โชคดีหยุดตรงแถวกลาง (ประมาณ 5 วินาที)
+    function landOn(names, winnerName) {
       return new Promise(function (resolve) {
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduce || !names || !names.length) { setTimeout(resolve, 600); return; }
-        const box = $('#nameBox');
-        let delay = 50, i = 0;
-        (function tick() {
-          box.textContent = names[i++ % names.length];
-          delay *= 1.12;
-          if (delay > 380) { resolve(); return; }
-          setTimeout(tick, delay);
-        })();
+        stopSpin();
+        if (reduce) { setTimeout(resolve, 300); return; }
+        const pool = names && names.length ? names : [winnerName];
+        const pick = function () { return pool[Math.floor(Math.random() * pool.length)]; };
+        const list = [];
+        for (let i = 0; i < 52; i++) list.push(pick());
+        list.push(winnerName, pick(), pick());
+        $('#reelBox').hidden = false;
+        $('#reelBox').className = 'reel-box spinning';
+        fillReel(list);
+        const reel = $('#reel');
+        const h = rowHeight();
+        const target = (list.length - 3 - 1) * h; // แถวบนสุดคือคนก่อนผู้โชคดี ผู้โชคดีจึงอยู่แถวกลาง
+        reel.style.transition = 'none';
+        reel.style.transform = 'translate3d(0,0,0)';
+        reel.classList.add('blur');
+        void reel.offsetHeight;
+        reel.style.transition = 'transform 5.4s cubic-bezier(.06, .62, .1, 1)';
+        reel.style.transform = 'translate3d(0,' + (-target) + 'px,0)';
+        setTimeout(function () { reel.classList.remove('blur'); }, 3200);
+        let done = false;
+        const end = function () {
+          if (done) return;
+          done = true;
+          $('#reelBox').className = 'reel-box landed';
+          setTimeout(resolve, 650); // ค้างที่ชื่อผู้โชคดีให้ทุกคนเห็นก่อนประกาศ
+        };
+        reel.addEventListener('transitionend', end, { once: true });
+        setTimeout(end, 5800);
       });
+    }
+
+    // ประกาศผู้โชคดี: แสงวาบ + ชื่อเด้งขึ้นพร้อมประกายทอง + กระดาษสีทอง
+    function reveal(w) {
+      $('#reelBox').hidden = true;
+      const stage = $('#stage');
+      stage.classList.remove('flash');
+      void stage.offsetWidth;
+      stage.classList.add('flash');
+      $('#kicker').classList.add('show');
+      const nameBox = $('#nameBox');
+      nameBox.hidden = false;
+      nameBox.className = 'name';
+      void nameBox.offsetWidth;
+      nameBox.className = 'name win';
+      nameBox.textContent = w.full_name;
+      $('#subBox').textContent = [w.company, w.phone_tail ? 'โทร xxx-xxx-' + w.phone_tail : ''].filter(Boolean).join('  ·  ');
+      $('#tierBox').innerHTML = '<span class="tier tier-' + esc(w.tier) + '">' + esc(w.tier) + '</span>';
+      $('#voidBtn').hidden = false;
+      confetti();
+    }
+
+    function confetti() {
+      if (reduce) return;
+      const c = $('#fx');
+      const g = c.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const W = c.clientWidth, H = c.clientHeight;
+      c.width = W * dpr; c.height = H * dpr;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const colors = ['#c9a24c', '#e9d6a6', '#f4ecd8', '#b48d3e', '#fff3c4', '#8a6d2f'];
+      const parts = [];
+      const add = function (x, y, vx, vy, i) {
+        parts.push({ x: x, y: y, vx: vx, vy: vy, w: 5 + Math.random() * 7, h: 9 + Math.random() * 10, r: Math.random() * 6, vr: (Math.random() - .5) * .35, c: colors[i % colors.length], star: Math.random() < .18 });
+      };
+      for (let i = 0; i < 240; i++) {
+        const a = Math.random() * Math.PI * 2, sp = 5 + Math.random() * 11;
+        add(W / 2, H * .45, Math.cos(a) * sp, Math.sin(a) * sp - 5, i);
+      }
+      for (let i = 0; i < 140; i++) add(Math.random() * W, -20 - Math.random() * H * .7, (Math.random() - .5) * 1.5, 2 + Math.random() * 3, i);
+      const start = performance.now(), DUR = 6500;
+      (function frame(t) {
+        const el = t - start;
+        g.clearRect(0, 0, W, H);
+        g.globalAlpha = Math.max(0, Math.min(1, (DUR - el) / 1500));
+        parts.forEach(function (p) {
+          p.vy += .11; p.vx *= .988; p.vy *= .988;
+          p.x += p.vx; p.y += p.vy; p.r += p.vr;
+          g.save();
+          g.translate(p.x, p.y);
+          g.rotate(p.r);
+          g.fillStyle = p.c;
+          if (p.star) {
+            g.beginPath();
+            for (let k = 0; k < 8; k++) { const rad = k % 2 ? p.w * .35 : p.w; g.lineTo(Math.cos(k * Math.PI / 4) * rad, Math.sin(k * Math.PI / 4) * rad); }
+            g.closePath(); g.fill();
+          } else {
+            const flip = Math.abs(Math.cos(p.r * 2));
+            g.fillRect(-p.w / 2, -p.h * flip / 2, p.w, p.h * flip + 1);
+          }
+          g.restore();
+        });
+        if (el < DUR) requestAnimationFrame(frame); else g.clearRect(0, 0, W, H);
+      })(start);
     }
 
     async function loadWinners() {

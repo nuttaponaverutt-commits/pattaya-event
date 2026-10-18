@@ -3,14 +3,19 @@ const RETRY_SAFE = ['config', 'register', 'lookup', 'login', 'scan', 'checkin', 
   'dashboard', 'list', 'sales_names', 'links', 'draw_list', 'logout'];
 
 // เรียก API (text/plain เพื่อไม่ให้เบราว์เซอร์ส่ง CORS preflight)
+// คำสั่งที่เขียนข้อมูลหรืออ่านทั้งชีต ปกติใช้เวลานานกว่า ให้รอนานกว่าคำสั่งอ่านทั่วไป
+const SLOW_ACTIONS = ['register', 'checkin', 'staff_register', 'dashboard', 'list'];
+
 async function api(action, data) {
-  const tries = RETRY_SAFE.indexOf(action) !== -1 ? 4 : 1;
+  const safe = RETRY_SAFE.indexOf(action) !== -1;
+  const tries = !safe ? 1 : (action === 'register' ? 5 : 4);
+  const wait = SLOW_ACTIONS.indexOf(action) !== -1 ? 20000 : 12000;
   let last;
   for (let i = 0; i < tries; i++) {
-    if (i > 0) await new Promise(function (r) { setTimeout(r, 1200 * i + Math.random() * 1200); });
-    // Google บางช่วงตอบช้ามาก รอไม่เกิน 30 วินาทีต่อครั้ง แล้วส่งใหม่
+    if (i > 0) await new Promise(function (r) { setTimeout(r, 800 * i + Math.random() * 1200); });
+    // Google ค้างไม่ตอบเป็นบางครั้ง ไม่ต้องรอนาน ตัดแล้วส่งใหม่ (ครั้งสุดท้ายรอได้ถึง 30 วินาที)
     const ctrl = window.AbortController ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 30000) : null;
+    const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, i === tries - 1 ? 30000 : wait) : null;
     try {
       const res = await fetch(window.API_URL, {
         method: 'POST',
@@ -34,9 +39,22 @@ async function api(action, data) {
 }
 
 function thaiDate(s) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
-  if (!m) return s || '';
-  return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('th-TH', { dateStyle: 'long' });
+  const d = parseEventDate(s);
+  return d ? d.toLocaleDateString('th-TH', { dateStyle: 'long' }) : (s || '');
+}
+
+// วันที่งานจากระบบ: ปกติเป็น 2026-11-06 ถ้าได้แบบเวลา UTC (2026-11-05T17:00:00.000Z) ให้คิดเป็นวันตามเวลาไทย
+function parseEventDate(s) {
+  const str = String(s || '');
+  let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const t = new Date(str);
+    if (isNaN(t)) return null;
+    const bkk = new Date(t.getTime() + 7 * 3600e3);
+    return new Date(bkk.getUTCFullYear(), bkk.getUTCMonth(), bkk.getUTCDate());
+  }
+  return null;
 }
 
 function cleanPhone(p) {
@@ -71,8 +89,6 @@ async function drawQrCard(info) {
   const font = '"IBM Plex Sans Thai", sans-serif';
 
   const display = '"Bodoni Moda", ' + font;
-  const tier = info.tier || 'Walk-in';
-  const tierColors = { 'VVIP': ['#b48d3e', '#151412'], 'VIP': ['#151412', '#e4cf9c'], 'Walk-in': ['#e7e2d6', '#3a372f'] }[tier] || ['#e7e2d6', '#3a372f'];
 
   g.fillStyle = '#ffffff';
   g.fillRect(0, 0, CARD_W, CARD_H);
@@ -92,14 +108,8 @@ async function drawQrCard(info) {
 
   g.fillStyle = '#1c1b18';
   g.font = '600 40px ' + font;
-  g.fillText(fitText(g, info.full_name || '', CARD_W - 80), CARD_W / 2, 238);
-
-  // แถบกลุ่มลูกค้า
-  g.font = '600 24px ' + font;
-  const tw = g.measureText(tier).width + 48;
-  roundRect(g, (CARD_W - tw) / 2, 256, tw, 40, 20, tierColors[0]);
-  g.fillStyle = tierColors[1];
-  g.fillText(tier, CARD_W / 2, 284);
+  // ไม่แสดงกลุ่ม (VVIP / VIP / Walk-in) บนการ์ดของลูกค้า Staff เห็นกลุ่มและสีสายรัดตอนสแกน
+  g.fillText(fitText(g, info.full_name || '', CARD_W - 80), CARD_W / 2, 250);
 
   const qr = qrcode(0, 'M');
   qr.addData(info.reg_id);
