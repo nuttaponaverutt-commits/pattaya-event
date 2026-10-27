@@ -111,6 +111,16 @@
               <input type="tel" id="phone" name="phone" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="0812345678">
               <div class="err" data-i18n="f.phone.err">Please enter a 10-digit mobile number</div>
             </div>
+            <div class="field" data-f="branch">
+              <label for="branch"><span data-i18n="f.branch">Makro branch you usually shop at</span><span class="req">*</span></label>
+              <select id="branch" name="branch"></select>
+              <div class="err" data-i18n="f.branch.err">Please select a branch</div>
+            </div>
+            <div class="field" data-f="branch_other" id="branchOtherField" hidden>
+              <label for="branch_other"><span data-i18n="f.branch.other">Branch or location name</span><span class="req">*</span></label>
+              <input type="text" id="branch_other" name="branch_other" maxlength="60" autocomplete="off">
+              <div class="err" data-i18n="f.branch.other.err">Please specify the branch</div>
+            </div>
             <div class="field" data-f="mmid">
               <label for="mmid"><span data-i18n="f.mmid">Makro membership number</span> <span class="opt" data-i18n="f.optional">(optional)</span></label>
               <input type="text" id="mmid" name="mmid" inputmode="numeric" maxlength="30" autocomplete="off">
@@ -328,6 +338,7 @@
     // วาดข้อความที่ขึ้นกับภาษาและข้อมูลจากระบบ (เรียกซ้ำเมื่อสลับ EN / TH)
     function render() {
       document.title = t('title.reg') + ' | Wine & Spirits Discovery 2026';
+      fillBranchSelect(document.getElementById('branch'), LANG === 'th', t('f.branch.ph'));
       buildGlow();
       if (!cfgRaw) return;
       const ev = eventInfoFor(cfgRaw);
@@ -379,6 +390,15 @@
       const f = e.target.closest('[data-f]');
       if (f) f.classList.remove('invalid');
     });
+    // เลือก "อื่นๆ" แล้วมีช่องให้พิมพ์ชื่อสาขาเอง
+    const branchSel = document.getElementById('branch');
+    fillBranchSelect(branchSel, LANG === 'th', t('f.branch.ph'));
+    branchSel.addEventListener('change', function () {
+      const other = this.value === 'Other';
+      document.getElementById('branchOtherField').hidden = !other;
+      this.closest('[data-f]').classList.remove('invalid');
+      if (other) document.getElementById('branch_other').focus();
+    });
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -387,6 +407,8 @@
         phone: cleanPhone(form.phone.value),
         mmid: form.mmid.value.trim(),
         company: form.company.value.trim(),
+        branch: branchSel.value,
+        branch_other: branchSel.value === 'Other' ? form.branch_other.value.trim() : '',
         age20: document.getElementById('age20').checked,
         pdpa: document.getElementById('pdpa').checked,
         src: isWalkin ? 'walkin' : '',
@@ -395,6 +417,8 @@
       const bad = [];
       if (!data.full_name) bad.push('full_name');
       if (!/^0\d{9}$/.test(data.phone)) bad.push('phone');
+      if (!data.branch) bad.push('branch');
+      else if (data.branch === 'Other' && !data.branch_other) bad.push('branch_other');
       if (!data.age20) bad.push('age20');
       if (!data.pdpa) bad.push('pdpa');
       form.querySelectorAll('[data-f]').forEach(function (el) {

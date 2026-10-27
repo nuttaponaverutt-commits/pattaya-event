@@ -57,6 +57,44 @@ function parseEventDate(s) {
   return null;
 }
 
+// สาขา Makro ให้ลูกค้าเลือกตอนลงทะเบียน [ค่าที่บันทึก (ชื่ออังกฤษ), ชื่อไทย] ต้องตรงกับ BRANCHES ใน gas/Api.gs
+const BRANCHES = [
+  ['Makro Ladpraw (ST01)', 'แม็คโคร สาขาลาดพร้าว (ST01)'],
+  ['Makro Srinakarin (ST03)', 'แม็คโคร สาขาศรีนครินทร์ (ST03)'],
+  ['Makro Sathon (ST18)', 'แม็คโคร สาขาสาทร (ST18)'],
+  ['Makro Bang Phli (ST57)', 'แม็คโคร สาขาบางพลี (ST57)'],
+  ['Makro Rayong (ST15)', 'แม็คโคร สาขาระยอง (ST15)'],
+  ['Makro Chanthaburi (ST26)', 'แม็คโคร สาขาจันทบุรี (ST26)'],
+  ['Makro Chonburi (ST05)', 'แม็คโคร สาขาชลบุรี (ST05)'],
+  ['Makro South Pattaya (ST44)', 'แม็คโคร สาขาพัทยาใต้ (ST44)'],
+  ['Makro North Pattaya (ST66)', 'แม็คโคร สาขาพัทยาเหนือ (ST66)'],
+  ['Makro Lamchabang (ST109)', 'แม็คโคร สาขาแหลมฉบัง (ST109)'],
+  ['Makro Bowin (ST131)', 'แม็คโคร สาขาบ่อวิน (ST131)'],
+  ['Makro Sattahip (ST132)', 'แม็คโคร สาขาสัตหีบ (ST132)'],
+  ['Makro Amata Nakorn (ST134)', 'แม็คโคร สาขาอมตะนคร (ST134)'],
+  ['Makro Amata Nakorn 2 (ST162)', 'แม็คโคร สาขาอมตะนคร 2 (ST162)'],
+  ['Makro Ban Bueng (ST168)', 'แม็คโคร สาขาบ้านบึง (ST168)'],
+  ['Head Office', 'Head Office'],
+  ['Other', 'อื่นๆ (โปรดระบุ)']
+];
+
+// ใส่ตัวเลือกสาขาใน <select> (thai = แสดงชื่อไทย) คงค่าที่เลือกไว้เดิม
+function fillBranchSelect(sel, thai, placeholder) {
+  const cur = sel.value;
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = placeholder;
+  sel.appendChild(ph);
+  BRANCHES.forEach(function (b) {
+    const o = document.createElement('option');
+    o.value = b[0];
+    o.textContent = thai ? b[1] : (b[0] === 'Other' ? 'Other (please specify)' : b[0]);
+    sel.appendChild(o);
+  });
+  sel.value = cur;
+}
+
 function cleanPhone(p) {
   let d = String(p || '').replace(/\D/g, '');
   if (d.length === 11 && d.indexOf('66') === 0) d = '0' + d.slice(2);

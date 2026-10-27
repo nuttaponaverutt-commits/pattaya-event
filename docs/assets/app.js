@@ -80,6 +80,7 @@ function personDetails(p) {
     '<dl class="kv">' +
     '<dt>MMID</dt><dd>' + esc(p.mmid || '-') + '</dd>' +
     '<dt>ร้าน/บริษัท</dt><dd>' + esc(p.company || '-') + '</dd>' +
+    '<dt>สาขาที่เลือก</dt><dd>' + esc(p.branch || '-') + '</dd>' +
     '<dt>เบอร์โทร</dt><dd>' + esc(p.phone || '-') + '</dd>' +
     '<dt>Sales</dt><dd>' + esc(p.sales_name || 'ไม่มี Sales') + '</dd>' +
     '<dt>รหัส</dt><dd>' + esc(p.short_code || p.reg_id) + '</dd>' +

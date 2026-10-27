@@ -609,7 +609,7 @@
         if (sales === '__weak' && WEAK.indexOf(r.match_method) === -1) return false;
         if (sales && sales.indexOf('__') !== 0 && r.sales_name !== sales) return false;
         if (q) {
-          const hay = [r.full_name, r.phone, r.mmid, r.company, r.reg_id, r.short_code, r.sales_name, r.customer_name, r.cust_no].join(' ').toLowerCase();
+          const hay = [r.full_name, r.phone, r.mmid, r.company, r.branch, r.reg_id, r.short_code, r.sales_name, r.customer_name, r.cust_no].join(' ').toLowerCase();
           if (hay.indexOf(q) === -1) return false;
         }
         return true;
@@ -696,6 +696,8 @@
           '<div class="field"><label>เบอร์โทร</label><input type="tel" name="phone" maxlength="16" value="' + esc(r.phone) + '"></div>' +
           '<div class="field"><label>MMID</label><input type="text" name="mmid" maxlength="30" value="' + esc(r.mmid) + '"></div>' +
           '<div class="field"><label>ร้าน/บริษัท</label><input type="text" name="company" maxlength="100" value="' + esc(r.company) + '"></div>' +
+          '<div class="field"><label>สาขาที่ลูกค้าเลือก <span class="opt">(เลือกจากรายการหรือพิมพ์เอง)</span></label><input type="text" name="branch" maxlength="100" list="branchList" value="' + esc(r.branch) + '">' +
+            '<datalist id="branchList">' + BRANCHES.filter(function (b) { return b[0] !== 'Other'; }).map(function (b) { return '<option value="' + esc(b[0]) + '">'; }).join('') + '</datalist></div>' +
           '<div class="field"><label>Sales <span class="opt">(เลือกเองจะไม่ถูกทับตอน Match ใหม่)</span></label><select name="sales_name">' + opts + '</select></div>' +
           '<div class="field"><label>กลุ่ม</label><select name="tier">' + ['VVIP', 'VIP', 'Walk-in'].map(function (t) {
             return '<option' + (t === (r.tier || 'Walk-in') ? ' selected' : '') + '>' + t + '</option>';
@@ -709,7 +711,7 @@
         e.preventDefault();
         const f = e.target;
         const fields = {};
-        ['full_name', 'phone', 'mmid', 'company', 'note', 'tier', 'status', 'sales_name'].forEach(function (k) {
+        ['full_name', 'phone', 'mmid', 'company', 'branch', 'note', 'tier', 'status', 'sales_name'].forEach(function (k) {
           const v = f[k].value.trim();
           // รายการเก่าที่ยังไม่มีกลุ่ม แสดงเป็น Walk-in อยู่แล้ว ไม่นับว่าแก้
           const cur = k === 'tier' ? (r.tier || 'Walk-in') : String(r[k] == null ? '' : r[k]);
@@ -765,7 +767,7 @@
       const rows = filtered();
       const cols = [
         ['reg_id', 'reg_id'], ['short_code', 'short_code'], ['created_at', 'created_at'], ['tier', 'tier'], ['source', 'source'], ['full_name', 'full_name'],
-        ['phone', 'phone'], ['mmid', 'mmid'], ['company', 'company'], ['cust_no', 'cust_no'], ['customer_name', 'customer_name'], ['store', 'store'], ['sales_name', 'sales_name'],
+        ['phone', 'phone'], ['mmid', 'mmid'], ['company', 'company'], ['branch', 'branch'], ['cust_no', 'cust_no'], ['customer_name', 'customer_name'], ['store', 'store'], ['sales_name', 'sales_name'],
         ['match_method', 'match_method'], ['status', 'status'], ['checked_in_at_full', 'checked_in_at'],
         ['checked_in_by', 'checked_in_by'], ['note', 'note']
       ];

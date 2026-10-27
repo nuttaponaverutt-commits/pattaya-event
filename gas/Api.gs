@@ -7,6 +7,13 @@ const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 const TZ = 'Asia/Bangkok';
 // กลุ่มลูกค้า เรียงจากสูงไปต่ำ (ใช้ตัดสินตอนลงทะเบียนซ้ำด้วยลิงก์กลุ่มที่สูงกว่า)
 const TIERS = ['VVIP', 'VIP', 'Walk-in'];
+// สาขา Makro ให้ลูกค้าเลือกตอนลงทะเบียน (ต้องตรงกับ BRANCHES ใน docs/assets/common.js) เลือก Other แล้วพิมพ์เองได้
+const BRANCHES = [
+  'Makro Ladpraw (ST01)', 'Makro Srinakarin (ST03)', 'Makro Sathon (ST18)', 'Makro Bang Phli (ST57)',
+  'Makro Rayong (ST15)', 'Makro Chanthaburi (ST26)', 'Makro Chonburi (ST05)', 'Makro South Pattaya (ST44)',
+  'Makro North Pattaya (ST66)', 'Makro Lamchabang (ST109)', 'Makro Bowin (ST131)', 'Makro Sattahip (ST132)',
+  'Makro Amata Nakorn (ST134)', 'Makro Amata Nakorn 2 (ST162)', 'Makro Ban Bueng (ST168)', 'Head Office', 'Other'
+];
 
 const PUBLIC_ACTIONS = {
   config: apiConfig_,
@@ -304,6 +311,7 @@ function apiUpdate_(req, sess) {
       upd.tier = fields.tier;
     }
     if ('company' in fields) upd.company = clip_(fields.company, 100);
+    if ('branch' in fields) upd.branch = clip_(fields.branch, 100);
     if ('note' in fields) upd.note = clip_(fields.note, 300);
     if ('sales_name' in fields) {
       upd.sales_name = clip_(fields.sales_name, 100);
@@ -476,9 +484,13 @@ function createRegistration_(f, source, tier, pre) {
   if (dup) {
     // ลงซ้ำด้วยลิงก์กลุ่มที่สูงกว่า ให้ยกระดับกลุ่ม ไม่ลดระดับ
     const cur = TIERS.indexOf(dup.tier) === -1 ? TIERS.length - 1 : TIERS.indexOf(dup.tier);
-    if (TIERS.indexOf(tier) !== -1 && TIERS.indexOf(tier) < cur) {
-      writeFields_(t, dup, { tier: tier });
-      dup.tier = tier;
+    const upd = {};
+    if (TIERS.indexOf(tier) !== -1 && TIERS.indexOf(tier) < cur) upd.tier = tier;
+    // คนที่ลงทะเบียนก่อนมีช่องสาขา ลงซ้ำแล้วเลือกสาขามา ให้เก็บไว้ด้วย
+    if (f.branch && !dup.branch) upd.branch = f.branch;
+    if (Object.keys(upd).length) {
+      writeFields_(t, dup, upd);
+      Object.assign(dup, upd);
     }
     return { existing: true, rec: dup };
   }
@@ -509,7 +521,8 @@ function createRegistration_(f, source, tier, pre) {
     tier: higherTier_(tier, m.cust_tier),
     cust_no: m.cust_no || '',
     customer_name: m.customer_name || '',
-    store: m.store || ''
+    store: m.store || '',
+    branch: f.branch || ''
   };
   appendRecord_(t, rec);
   return { existing: false, rec: rec };
@@ -539,7 +552,9 @@ function validateForm_(req) {
     full_name: clip_(req.full_name, 100).replace(/\s+/g, ' '),
     phone: cleanPhone_(req.phone),
     mmid: clip_(req.mmid, 30),
-    company: clip_(req.company, 100)
+    company: clip_(req.company, 100),
+    // หน้าเว็บบังคับเลือก แต่ฝั่งนี้ไม่บังคับ คนที่เปิดหน้าเว็บเก่าค้างไว้จะได้ยังลงทะเบียนได้
+    branch: cleanBranch_(req.branch, req.branch_other)
   };
   if (!f.full_name) fail_('กรุณากรอกชื่อ-นามสกุล');
   if (!/^0\d{9}$/.test(f.phone)) fail_('เบอร์โทรต้องเป็นตัวเลข 10 หลัก');
@@ -866,6 +881,7 @@ function pub_(r) {
     sales_name: r.sales_name,
     customer_name: r.customer_name || '',
     store: r.store || '',
+    branch: r.branch || '',
     source: r.source,
     tier: r.tier || 'Walk-in',
     status: r.status,
@@ -883,6 +899,16 @@ function full_(r) {
   o.cust_no = r.cust_no ? String(r.cust_no) : '';
   o.note = r.note;
   return o;
+}
+
+// รับเฉพาะสาขาที่อยู่ในรายการ ถ้าเลือก Other เก็บเป็น "Other: ชื่อที่พิมพ์"
+function cleanBranch_(b, other) {
+  b = clip_(b, 60);
+  if (b === 'Other') {
+    const o = clip_(other, 60);
+    return o ? 'Other: ' + o : 'Other';
+  }
+  return BRANCHES.indexOf(b) !== -1 ? b : '';
 }
 
 function fail_(msg) {

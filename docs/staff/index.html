@@ -114,6 +114,14 @@
           <label for="r_company">ชื่อร้าน / บริษัท <span class="opt">(ถ้ามี)</span></label>
           <input type="text" id="r_company" maxlength="100" autocomplete="off">
         </div>
+        <div class="field">
+          <label for="r_branch">สาขาแม็คโครที่ใช้บริการประจำ <span class="opt">(ถ้าลูกค้าบอก)</span></label>
+          <select id="r_branch"></select>
+        </div>
+        <div class="field" id="r_branchOtherField" hidden>
+          <label for="r_branch_other">ชื่อสาขาหรือพื้นที่</label>
+          <input type="text" id="r_branch_other" maxlength="60" autocomplete="off">
+        </div>
         <label class="check" data-f="age20">
           <input type="checkbox" id="r_age20">
           <span>ตรวจบัตรประชาชนแล้ว อายุ 20 ปีบริบูรณ์ขึ้นไป<span class="req">*</span></span>
@@ -504,6 +512,11 @@
       const f = e.target.closest('[data-f]');
       if (f) f.classList.remove('invalid');
     });
+    // หน้างานคิวยาว สาขาไม่บังคับ ถ้าเลือก "อื่นๆ" มีช่องให้พิมพ์เอง
+    fillBranchSelect($('#r_branch'), true, 'ไม่ระบุ');
+    $('#r_branch').addEventListener('change', function () { $('#r_branchOtherField').hidden = this.value !== 'Other'; });
+    regForm.addEventListener('reset', function () { setTimeout(function () { $('#r_branchOtherField').hidden = true; }); });
+
     regForm.addEventListener('submit', async function (e) {
       e.preventDefault();
       const data = {
@@ -511,6 +524,8 @@
         phone: cleanPhone($('#r_phone').value),
         mmid: $('#r_mmid').value.trim(),
         company: $('#r_company').value.trim(),
+        branch: $('#r_branch').value,
+        branch_other: $('#r_branch').value === 'Other' ? $('#r_branch_other').value.trim() : '',
         tier: $('#r_tier').value,
         age20: $('#r_age20').checked,
         pdpa: $('#r_pdpa').checked

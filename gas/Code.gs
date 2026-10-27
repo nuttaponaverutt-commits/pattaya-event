@@ -3,7 +3,8 @@ const SHEETS = {
     'reg_id', 'created_at', 'source', 'full_name', 'phone', 'mmid', 'company',
     'age_20_confirmed', 'pdpa_consent', 'sales_name', 'match_method', 'status',
     'checked_in_at', 'checked_in_by', 'note', 'tier', 'short_code',
-    'cust_no', 'customer_name', 'store'
+    'cust_no', 'customer_name', 'store',
+    'branch' // สาขา Makro ที่ลูกค้าเลือกเองตอนลงทะเบียน (store คือสาขาจากรายชื่อลูกค้า)
   ],
   // รายชื่อลูกค้าเป้าหมาย นำเข้าจากหน้าหลังบ้าน (ไฟล์ยอด ALC หรือตาราง Excel ทั่วไป)
   Customers: [
